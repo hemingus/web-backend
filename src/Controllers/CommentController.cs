@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
+using System.Collections.Specialized;
+using web_backend.Entities;
 using web_backend.Models;
+using web_backend.Services;
 
 namespace web_backend.Controllers
 {
@@ -8,46 +11,45 @@ namespace web_backend.Controllers
     [Route("[controller]")] 
     public class CommentController : ControllerBase
     {
-        
+        private readonly IRepository _repo;
+        private readonly NameValueCollection settings = 
+            System.Configuration.ConfigurationManager.AppSettings;
+
+        public CommentController(IRepository repo)
+        {
+            _repo = repo ?? throw new ArgumentNullException(nameof(repo));
+        }
 
         private IEnumerable<CommentDto> generateComments()
         {
             List<CommentDto> comments = new List<CommentDto>();
-            comments.Add(new CommentDto(1, "Alf", "Hallais!"));
-            comments.Add(new CommentDto(2, "Gunn", "Heisann!"));
+            comments.Add(new CommentDto("1", "Alf", "Hallais!"));
+            comments.Add(new CommentDto("2", "Gunn", "Heisann!"));
 
             return comments;
         }
 
-
-        [HttpGet]
-        public async Task<IEnumerable<CommentDto>> getAllComments()
+        [HttpGet(Name = "GetComments")]
+        public async Task<IEnumerable<CommentDto>> GetAllComments()
         {
-            var settings = System.Configuration.ConfigurationManager.AppSettings;
-            //return generateComments();
-            using CosmosClient client = 
-                new(accountEndpoint: settings["CosmosDbUrl"],
-                authKeyOrResourceToken: settings["CosmosDbSecret"]
-                );
-
-            var container = client.GetContainer(
-                settings["CosmosDatabaseName"], 
-                settings["CosmosContainerName"]
-                );
-
-            using FeedIterator<CommentDto> feed = container.GetItemQueryIterator<CommentDto>(
-                queryText: "SELECT * FROM comments WHERE comments.name = 'Severin'"
-                );
-
-            while (feed.HasMoreResults)
+            var commentsFromDb = await _repo.GetCommentsAsync();
+            var commentDtosToReturn = new List<CommentDto>();
+            foreach (var comment in commentsFromDb)
             {
-                FeedResponse<CommentDto> response = await feed.ReadNextAsync();
-
-                return response;
-
+                commentDtosToReturn.Add(new CommentDto(comment.Id, comment.Name, comment.CommentBody));
             }
-            return null; 
+            return commentDtosToReturn;
+        }
 
+        [HttpPost]
+        public async Task<ActionResult<CommentDto>> createComment(
+            CommentForCreationDto comment)
+        {
+            var commentEntity = new Comment(comment.Name, comment.CommentBody);
+            _repo.AddComment(commentEntity);
+            await _repo.SaveChangesAsync();
+            var commentToReturn = new CommentDto(commentEntity.Id, commentEntity.Name, commentEntity.CommentBody);
+            return CreatedAtRoute("GetComments", commentToReturn);
         }
     }
 }
