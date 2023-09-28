@@ -14,8 +14,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IRepository, CosmosRepository>();
 builder.Services.AddDbContextFactory<CosmosContext>(optionsBuilder => { 
     optionsBuilder.UseCosmos(
-        connectionString: builder.Configuration["DEV_COSMOS_CONNECTION_STRING"],
-        databaseName: builder.Configuration["DEV_COSMOS_DATABASE"]
+        connectionString: builder.Configuration["PROD_COSMOS_CONNECTION_STRING"],
+        databaseName: builder.Configuration["PROD_COSMOS_DATABASE"]
         );
     });
 

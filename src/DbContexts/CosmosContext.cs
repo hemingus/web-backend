@@ -17,9 +17,9 @@ namespace web_backend.DbContexts
         {
             modelBuilder.Entity<Comment>()
                 .HasData(
-                    new Comment("Ask", "Ka e det der?"));
+                    new Comment("Ask", "Ka e det der igjen?"));
 
-            modelBuilder.HasDefaultContainer("Comment").HasManualThroughput(1000);
+            modelBuilder.HasDefaultContainer("Comment").HasManualThroughput(400);
 
             modelBuilder.Entity<Comment>().HasKey(c => c.Id);
 
