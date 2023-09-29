@@ -20,15 +20,6 @@ namespace web_backend.Controllers
             _repo = repo ?? throw new ArgumentNullException(nameof(repo));
         }
 
-        private IEnumerable<CommentDto> generateComments()
-        {
-            List<CommentDto> comments = new List<CommentDto>();
-            comments.Add(new CommentDto("1", "Alf", "Hallais!"));
-            comments.Add(new CommentDto("2", "Gunn", "Heisann!"));
-
-            return comments;
-        }
-
         [HttpGet(Name = "GetComments")]
         public async Task<IEnumerable<CommentDto>> GetAllComments()
         {
@@ -36,7 +27,7 @@ namespace web_backend.Controllers
             var commentDtosToReturn = new List<CommentDto>();
             foreach (var comment in commentsFromDb)
             {
-                commentDtosToReturn.Add(new CommentDto(comment.Id, comment.Name, comment.CommentBody));
+                commentDtosToReturn.Add(new CommentDto(comment.Id, comment.Timestamp, comment.Name, comment.CommentBody));
             }
             return commentDtosToReturn;
         }
@@ -48,7 +39,7 @@ namespace web_backend.Controllers
             var commentEntity = new Comment(comment.Name, comment.CommentBody);
             _repo.AddComment(commentEntity);
             await _repo.SaveChangesAsync();
-            var commentToReturn = new CommentDto(commentEntity.Id, commentEntity.Name, commentEntity.CommentBody);
+            var commentToReturn = new CommentDto(commentEntity.Id, commentEntity.Timestamp, commentEntity.Name, commentEntity.CommentBody);
             return CreatedAtRoute("GetComments", commentToReturn);
         }
     }
