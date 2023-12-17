@@ -20,6 +20,15 @@ namespace web_backend.Controllers
             _repo = repo ?? throw new ArgumentNullException(nameof(repo));
         }
 
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetCommentById(string id)
+        {
+            var comment = await _repo.GetCommentByIdAsync(id);
+            if (comment == null) return NotFound();
+            CommentDto commentDtoToReturn = new CommentDto(comment.Id, comment.Timestamp, comment.Name, comment.CommentBody);
+            return Ok(commentDtoToReturn);
+        }
+
         [HttpGet(Name = "GetComments")]
         public async Task<IEnumerable<CommentDto>> GetAllComments()
         {
@@ -41,6 +50,17 @@ namespace web_backend.Controllers
             await _repo.SaveChangesAsync();
             var commentToReturn = new CommentDto(commentEntity.Id, commentEntity.Timestamp, commentEntity.Name, commentEntity.CommentBody);
             return CreatedAtRoute("GetComments", commentToReturn);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> deleteComment(
+            string commentId)
+        {
+            var comment = await _repo.GetCommentByIdAsync(commentId);
+            if (comment == null) return NotFound();
+            _repo.RemoveComment(comment);
+            await _repo.SaveChangesAsync();
+            return NoContent();
         }
     }
 }
