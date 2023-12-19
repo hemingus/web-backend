@@ -54,9 +54,9 @@ namespace web_backend.Controllers
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> deleteComment(
-            string commentId)
+            string id)
         {
-            var comment = await _repo.GetCommentByIdAsync(commentId);
+            var comment = await _repo.GetCommentByIdAsync(id);
             if (comment == null) return NotFound();
             _repo.RemoveComment(comment);
             await _repo.SaveChangesAsync();
