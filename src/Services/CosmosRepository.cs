@@ -15,6 +15,8 @@ namespace web_backend.Services
             //_context.Database.EnsureCreated();
         }
 
+        // Comment methods
+
          public async Task<IEnumerable<Comment>> GetCommentsAsync()
         {
             return await _context.Comments.ToListAsync();
@@ -43,10 +45,42 @@ namespace web_backend.Services
             _context.Comments.Remove(comment);
         }
 
+
+        // TaskEntity methods
+
+        public async Task<IEnumerable<TaskEntity>> GetTasksAsync()
+        {
+            return await _context.Tasks.ToListAsync();
+        }
+        public async Task<TaskEntity> GetTaskByIdAsync(string taskId)
+        {
+            try
+            {
+                TaskEntity task = await _context.Tasks.SingleOrDefaultAsync(t => t.Id == taskId);
+                return task;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return null;
+            }
+        }
+
+        public void AddTask(TaskEntity task)
+        {
+            _context.Tasks.Add(task);
+        }
+
+        public void RemoveTask(TaskEntity task)
+        {
+            _context.Tasks.Remove(task);
+        }
+
+        // Save changes
         public async Task<bool> SaveChangesAsync()
         {
             return (await _context.SaveChangesAsync() >= 0);
         }
-      
+
     }
 }
