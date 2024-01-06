@@ -61,5 +61,24 @@ namespace web_backend.Controllers
             await _repo.SaveChangesAsync();
             return NoContent();
         }
+
+        [HttpPatch("{id}")]
+        public async Task<ActionResult<TaskEntityDto>> UpdateTaskCompleted(string id, TaskEntityUpdateCompletedDto taskUpdateDto)
+        {
+            var existingTask = await _repo.GetTaskByIdAsync(id);
+
+            if (existingTask == null)
+            {
+                return NotFound();
+            }
+
+            existingTask.IsComplete = taskUpdateDto.IsComplete;
+            
+            _repo.UpdateTask(existingTask);
+            await _repo.SaveChangesAsync();
+
+            var updatedTask = new TaskEntityDto(existingTask.Id, existingTask.TimeCreated, existingTask.Description, existingTask.IsComplete);
+            return Ok(updatedTask);
+        }
     }
 }

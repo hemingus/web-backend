@@ -8,8 +8,8 @@
 //namespace web_backend.Controllers
 //{
 //    [ApiController]
-//    [Route("[controller]")]
-//    public class TaskEntityController : Controller
+//    [Route("/TaskEntity/{taskId}/Subtask")]
+//    public class SubtaskController : Controller
 //    {
 //        private readonly IRepository _repo;
 //        private readonly NameValueCollection settings =
