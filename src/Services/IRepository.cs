@@ -14,6 +14,7 @@ namespace web_backend.Services
         Task<TaskEntity> GetTaskByIdAsync(string taskId);
         void AddTask(TaskEntity task);
         void RemoveTask(TaskEntity task);
+        void UpdateTask(TaskEntity task);
 
         // Save changes
         Task<bool> SaveChangesAsync();

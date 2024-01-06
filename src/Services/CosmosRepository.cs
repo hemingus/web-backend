@@ -76,6 +76,11 @@ namespace web_backend.Services
             _context.Tasks.Remove(task);
         }
 
+        public void UpdateTask(TaskEntity task)
+        {
+            _context.Tasks.Update(task);
+        }
+
         // Save changes
         public async Task<bool> SaveChangesAsync()
         {
