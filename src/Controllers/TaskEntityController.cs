@@ -24,7 +24,7 @@ namespace web_backend.Controllers
         {
             var task = await _repo.GetTaskByIdAsync(id);
             if (task == null) return NotFound();
-            TaskEntityDto taskDtoToReturn = new TaskEntityDto(task.Id, task.TimeCreated, task.Description, task.IsComplete);
+            TaskEntityDto taskDtoToReturn = new TaskEntityDto(task.Id, task.TimeCreated, task.Description, task.IsComplete, task.Subtasks);
             return Ok(taskDtoToReturn);
         }
 
@@ -35,19 +35,19 @@ namespace web_backend.Controllers
             var taskDtosToReturn = new List<TaskEntityDto>();
             foreach (var task in tasksFromDb)
             {
-                taskDtosToReturn.Add(new TaskEntityDto(task.Id, task.TimeCreated, task.Description, task.IsComplete));
+                taskDtosToReturn.Add(new TaskEntityDto(task.Id, task.TimeCreated, task.Description, task.IsComplete, task.Subtasks));
             }
             return taskDtosToReturn;
         }
 
         [HttpPost]
-        public async Task<ActionResult<CommentDto>> createTask(
+        public async Task<ActionResult<TaskEntityDto>> createTask(
             TaskEntityForCreationDto task)
         {
             var taskEntity = new TaskEntity(task.Description, false);
             _repo.AddTask(taskEntity);
             await _repo.SaveChangesAsync();
-            var taskToReturn = new TaskEntityDto(taskEntity.Id, taskEntity.TimeCreated, taskEntity.Description, taskEntity.IsComplete);
+            var taskToReturn = new TaskEntityDto(taskEntity.Id, taskEntity.TimeCreated, taskEntity.Description, taskEntity.IsComplete, taskEntity.Subtasks);
             return CreatedAtRoute("GetTasks", taskToReturn);
         }
 
@@ -77,7 +77,7 @@ namespace web_backend.Controllers
             _repo.UpdateTask(existingTask);
             await _repo.SaveChangesAsync();
 
-            var updatedTask = new TaskEntityDto(existingTask.Id, existingTask.TimeCreated, existingTask.Description, existingTask.IsComplete);
+            var updatedTask = new TaskEntityDto(existingTask.Id, existingTask.TimeCreated, existingTask.Description, existingTask.IsComplete, existingTask.Subtasks);
             return Ok(updatedTask);
         }
     }

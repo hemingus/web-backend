@@ -1,65 +1,100 @@
-﻿//using Microsoft.AspNetCore.Mvc;
-//using Microsoft.Azure.Cosmos;
-//using System.Collections.Specialized;
-//using web_backend.Entities;
-//using web_backend.Models;
-//using web_backend.Services;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Cosmos;
+using System.Collections.Specialized;
+using web_backend.Entities;
+using web_backend.Models;
+using web_backend.Services;
 
-//namespace web_backend.Controllers
-//{
-//    [ApiController]
-//    [Route("/TaskEntity/{taskId}/Subtask")]
-//    public class SubtaskController : Controller
-//    {
-//        private readonly IRepository _repo;
-//        private readonly NameValueCollection settings =
-//            System.Configuration.ConfigurationManager.AppSettings;
-//        public TaskEntityController(IRepository repo)
-//        {
-//            _repo = repo ?? throw new ArgumentNullException(nameof(repo));
-//        }
+namespace web_backend.Controllers
+{
+    [ApiController]
+    [Route("taskentity/{taskId}/subtask")]
+    public class SubtaskController : Controller
+    {
+        private readonly IRepository _repo;
+        private readonly NameValueCollection settings =
+            System.Configuration.ConfigurationManager.AppSettings;
+        public SubtaskController(IRepository repo)
+        {
+            _repo = repo ?? throw new ArgumentNullException(nameof(repo));
+        }
 
-//        [HttpGet("{id}")]
-//        public async Task<IActionResult> GetTaskById(string id)
-//        {
-//            var task = await _repo.GetTaskByIdAsync(id);
-//            if (task == null) return NotFound();
-//            TaskEntityDto taskDtoToReturn = new TaskEntityDto(task.Id, task.TimeCreated, task.Description, task.IsComplete);
-//            return Ok(taskDtoToReturn);
-//        }
+        [HttpGet("{subtaskId}")]
+        public async Task<IActionResult> GetSubtaskById(string taskId, string subtaskId)
+        {
+            try
+            {
+                var task = await _repo.GetTaskByIdAsync(taskId);
+                if (task == null)
+                {
+                    return NotFound();
+                }
+                var subtask = _repo.GetSubtaskById(task, subtaskId);
+                var subtaskToReturn = new SubtaskDto(subtask.TaskId, subtask.Id, subtask.TimeStamp, subtask.Description, subtask.IsComplete, subtask.Steps);
+                
+                return Ok(subtaskToReturn);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return StatusCode(500);
+            }
+            
+        }
 
-//        [HttpGet(Name = "GetTasks")]
-//        public async Task<IEnumerable<TaskEntityDto>> GetAllTasks()
-//        {
-//            var tasksFromDb = await _repo.GetTasksAsync();
-//            var taskDtosToReturn = new List<TaskEntityDto>();
-//            foreach (var task in tasksFromDb)
-//            {
-//                taskDtosToReturn.Add(new TaskEntityDto(task.Id, task.TimeCreated, task.Description, task.IsComplete));
-//            }
-//            return taskDtosToReturn;
-//        }
+        [HttpGet(Name = "GetSubtasks")]
+        public async Task<IActionResult> GetAllSubtasks(string taskId)
+        {
+            try
+            {
+                var task = await _repo.GetTaskByIdAsync(taskId);
+                if (task == null)
+                {
+                    return NotFound(); // TaskEntity with the provided ID not found
+                }
+                var subtasks = _repo.GetSubtasks(task);
+                return Ok(subtasks);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return StatusCode(500, "Internal server error");
+            }
+        }
 
-//        [HttpPost]
-//        public async Task<ActionResult<CommentDto>> createTask(
-//            TaskEntityForCreationDto task)
-//        {
-//            var taskEntity = new TaskEntity(task.Description, false);
-//            _repo.AddTask(taskEntity);
-//            await _repo.SaveChangesAsync();
-//            var taskToReturn = new TaskEntityDto(taskEntity.Id, taskEntity.TimeCreated, taskEntity.Description, taskEntity.IsComplete);
-//            return CreatedAtRoute("GetTasks", taskToReturn);
-//        }
+        [HttpPatch]
+        public async Task<ActionResult<SubtaskDto>> CreateSubtask(string taskId,
+            SubtaskForCreationDto subtaskForCreation)
+        {
+            try
+            {
+                var task = await _repo.GetTaskByIdAsync(taskId);
+                if (task == null)
+                {
+                    return NotFound();
+                }
+                var subtask = new Subtask(taskId, subtaskForCreation.Description);
+                _repo.AddSubtask(task, subtask);
+                await _repo.SaveChangesAsync();
+                return NoContent();
+            }
+            
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return StatusCode(500, "Internal server error");
+            }
+        }
 
-//        [HttpDelete("{id}")]
-//        public async Task<IActionResult> deleteTask(
-//            string id)
-//        {
-//            var task = await _repo.GetTaskByIdAsync(id);
-//            if (task == null) return NotFound();
-//            _repo.RemoveTask(task);
-//            await _repo.SaveChangesAsync();
-//            return NoContent();
-//        }
-//    }
-//}
+        [HttpDelete("{subtaskId}")]
+        public async Task<IActionResult> DeleteSubtask(string taskId,
+            string subtaskId)
+        {
+            var task = await _repo.GetTaskByIdAsync(taskId);
+            if (task == null) return NotFound();
+            _repo.RemoveSubtask(task, subtaskId);
+            await _repo.SaveChangesAsync();
+            return NoContent();
+        }
+    }
+}
