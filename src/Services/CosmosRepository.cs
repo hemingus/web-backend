@@ -81,11 +81,44 @@ namespace web_backend.Services
             _context.Tasks.Update(task);
         }
 
+        // Subtask methods
+        public IEnumerable<Subtask> GetSubtasks(TaskEntity task)
+        {
+            return task.Subtasks;
+        }
+
+        public Subtask GetSubtaskById(TaskEntity task, string subtaskId)
+        {
+            Subtask subtask = task.Subtasks.FirstOrDefault(s => s.Id == subtaskId);
+            if (subtask == null) 
+            {
+                return null;
+            }
+            return subtask;
+        }
+
+        public void AddSubtask(TaskEntity task, Subtask subtask)
+        {
+            task.Subtasks.Add(subtask);
+        }
+
+        public void RemoveSubtask(TaskEntity task, string subtaskId)
+        {
+            Subtask subtask = task.Subtasks.FirstOrDefault(s => s.Id == subtaskId);
+            if (subtask != null) task.Subtasks.Remove(subtask);
+        }
+
+        public void UpdateSubtask(Subtask subtask)
+        {
+            throw new NotImplementedException();
+        }
+
         // Save changes
         public async Task<bool> SaveChangesAsync()
         {
             return (await _context.SaveChangesAsync() >= 0);
         }
+
 
     }
 }

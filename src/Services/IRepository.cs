@@ -16,6 +16,13 @@ namespace web_backend.Services
         void RemoveTask(TaskEntity task);
         void UpdateTask(TaskEntity task);
 
+        // Subtask
+        IEnumerable<Subtask> GetSubtasks(TaskEntity task);
+        Subtask GetSubtaskById(TaskEntity task, string subtaskId);
+        void AddSubtask(TaskEntity task, Subtask subtask);
+        void RemoveSubtask(TaskEntity task, string subtaskId);
+        void UpdateSubtask(Subtask subtask);
+
         // Save changes
         Task<bool> SaveChangesAsync();
     }
