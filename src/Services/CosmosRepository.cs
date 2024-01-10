@@ -113,12 +113,43 @@ namespace web_backend.Services
             throw new NotImplementedException();
         }
 
+        // Step methods
+
+        public IEnumerable<Step> GetSteps(Subtask subtask)
+        {
+            return subtask.Steps;
+        }
+
+        public Step GetStepById(Subtask subtask,  string stepId)
+        {
+            Step step = subtask.Steps.FirstOrDefault(s => s.Id == stepId);
+            if (step == null)
+            {
+                return null;
+            }
+            return step;
+        }
+
+        public void AddStep(Subtask subtask, Step step)
+        {
+            subtask.Steps.Add(step);
+        }
+
+        public void RemoveStep(Subtask subtask, string stepId)
+        {
+            Step step = GetStepById(subtask, stepId);
+            subtask.Steps.Remove(step);
+        }
+
+        public void UpdateStep(Step step)
+        {
+            throw new NotImplementedException();
+        }
+
         // Save changes
         public async Task<bool> SaveChangesAsync()
         {
             return (await _context.SaveChangesAsync() >= 0);
         }
-
-
     }
 }

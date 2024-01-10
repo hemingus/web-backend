@@ -7,7 +7,7 @@
         public string Description { get; set; }
         public Boolean IsComplete { get; set; }
         public ICollection<Step> Steps { get; set; }
-        public string TimeStamp { get; set; }
+        public string Timestamp { get; set; }
 
         public Subtask(string taskId, string description)
         {
@@ -16,7 +16,7 @@
             Description = description;
             IsComplete = false;
             Steps = new List<Step>();
-            TimeStamp = DateTime.Now.ToString();
+            Timestamp = DateTime.Now.ToString();
         }
     }
 }
