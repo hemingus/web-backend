@@ -30,7 +30,7 @@ namespace web_backend.Controllers
                     return NotFound();
                 }
                 var subtask = _repo.GetSubtaskById(task, subtaskId);
-                var subtaskToReturn = new SubtaskDto(subtask.TaskId, subtask.Id, subtask.TimeStamp, subtask.Description, subtask.IsComplete, subtask.Steps);
+                var subtaskToReturn = new SubtaskDto(subtask.TaskId, subtask.Id, subtask.Timestamp, subtask.Description, subtask.IsComplete, subtask.Steps);
                 
                 return Ok(subtaskToReturn);
             }

@@ -2,18 +2,21 @@
 {
     public class Step
     {
-        public string StepId { get; set; }
+        public string Id { get; set; }
+        public string SubtaskId { get; set; }
+        public string TaskId { get; set; }
         public string Description { get; set; }
         public Boolean IsComplete { get; set; }
-        public string TimeCreated { get; set; }
+        public string Timestamp { get; set; }
 
-        public Step(string description)
+        public Step(string taskId, string subtaskId, string description)
         {
-            StepId = Guid.NewGuid().ToString();
+            Id = Guid.NewGuid().ToString();
+            SubtaskId = subtaskId;
+            TaskId = taskId;
             Description = description;
             IsComplete = false;
-            TimeCreated = DateTime.Now.ToString();
-
+            Timestamp = DateTime.Now.ToString();
         }
     }
 }
