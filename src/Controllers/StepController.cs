@@ -123,5 +123,37 @@ namespace web_backend.Controllers
                 return StatusCode(500, "Internal server error");
             } 
         }
+
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> UpdateStepStatus(string taskId, string subtaskId, string id, StepUpdateCompletedDto stepUpdateDto)
+        {
+            try
+            {
+                var task = await _repo.GetTaskByIdAsync(taskId);
+                if (task == null)
+                {
+                    return NotFound(); // TaskEntity with the provided ID not found
+                }
+                var subtask = _repo.GetSubtaskById(task, subtaskId);
+                if (subtask == null)
+                {
+                    return NotFound(); // Subtask with the provided ID not found
+                }
+                var existingStep = _repo.GetStepById(subtask, id);
+                if (existingStep == null)
+                {
+                    return NotFound(); // Step with the provided ID not found
+                }
+                existingStep.IsComplete = stepUpdateDto.IsComplete;
+                _repo.UpdateTask(task);
+                await _repo.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return StatusCode(500, "Internal server error");
+            }
+        }
     }
 }

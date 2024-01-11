@@ -39,7 +39,6 @@ namespace web_backend.Controllers
                 Console.WriteLine(ex);
                 return StatusCode(500);
             }
-            
         }
 
         [HttpGet(Name = "GetSubtasks")]
@@ -90,11 +89,51 @@ namespace web_backend.Controllers
         public async Task<IActionResult> DeleteSubtask(string taskId,
             string subtaskId)
         {
-            var task = await _repo.GetTaskByIdAsync(taskId);
-            if (task == null) return NotFound();
-            _repo.RemoveSubtask(task, subtaskId);
-            await _repo.SaveChangesAsync();
-            return NoContent();
+            try
+            {
+                var task = await _repo.GetTaskByIdAsync(taskId);
+                if (task == null)
+                {
+                    return NotFound();
+                }
+                _repo.RemoveSubtask(task, subtaskId);
+                await _repo.SaveChangesAsync();
+                return NoContent();
+            }
+
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpPatch("{subtaskId}")]
+        public async Task<IActionResult> UpdateSubtaskCompleted(string taskId, string subtaskId, SubtaskUpdateCompletedDto subtaskUpdateDto)
+        {
+            try
+            {
+                var task = await _repo.GetTaskByIdAsync(taskId);
+                if (task == null)
+                {
+                    return NotFound();
+                }
+                var existingSubtask = _repo.GetSubtaskById(task, subtaskId);
+                if (existingSubtask == null)
+                {
+                    return NotFound();
+                }
+                existingSubtask.IsComplete = subtaskUpdateDto.IsComplete;
+                _repo.UpdateTask(task);
+                await _repo.SaveChangesAsync();
+                return NoContent();
+            }
+
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return StatusCode(500, "Internal server error");
+            }
         }
     }
 }
