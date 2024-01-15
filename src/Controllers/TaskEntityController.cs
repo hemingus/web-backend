@@ -125,5 +125,33 @@ namespace web_backend.Controllers
                 return StatusCode(500, "Internal server error");
             }
         }
+
+        [HttpPatch("{id}/description")]
+        public async Task<ActionResult<TaskEntityDto>> UpdateTaskCompleted(string id, TaskEntityUpdateDescriptionDto taskUpdateDto)
+        {
+            try
+            {
+                var existingTask = await _repo.GetTaskByIdAsync(id);
+
+                if (existingTask == null)
+                {
+                    return NotFound();
+                }
+
+                existingTask.Description = taskUpdateDto.Description;
+
+                _repo.UpdateTask(existingTask);
+                await _repo.SaveChangesAsync();
+
+                var updatedTask = new TaskEntityDto(existingTask.Id, existingTask.Timestamp, existingTask.Description, existingTask.IsComplete, existingTask.Subtasks);
+                return Ok(updatedTask);
+            }
+
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return StatusCode(500, "Internal server error");
+            }
+        }
     }
 }

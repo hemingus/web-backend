@@ -135,5 +135,33 @@ namespace web_backend.Controllers
                 return StatusCode(500, "Internal server error");
             }
         }
+
+        [HttpPatch("{subtaskId}/description")]
+        public async Task<IActionResult> UpdateSubtaskDescription(string taskId, string subtaskId, SubtaskUpdateDescriptionDto subtaskUpdateDto)
+        {
+            try
+            {
+                var task = await _repo.GetTaskByIdAsync(taskId);
+                if (task == null)
+                {
+                    return NotFound();
+                }
+                var existingSubtask = _repo.GetSubtaskById(task, subtaskId);
+                if (existingSubtask == null)
+                {
+                    return NotFound();
+                }
+                existingSubtask.Description = subtaskUpdateDto.Description;
+                _repo.UpdateTask(task);
+                await _repo.SaveChangesAsync();
+                return NoContent();
+            }
+
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return StatusCode(500, "Internal server error");
+            }
+        }
     }
 }
