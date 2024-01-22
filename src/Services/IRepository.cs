@@ -12,6 +12,8 @@ namespace web_backend.Services
         // TaskEntity
         Task<IEnumerable<TaskEntity>> GetTasksAsync();
         Task<TaskEntity> GetTaskByIdAsync(string taskId);
+        void UpdateTaskOrder(TaskEntity entity, int newOrder);
+        void ReorderTasks();
         void AddTask(TaskEntity task);
         void RemoveTask(TaskEntity task);
         void UpdateTask(TaskEntity task);

@@ -7,15 +7,17 @@
         public Boolean IsComplete { get; set; }
         public ICollection<Subtask> Subtasks { get; set; }
         public string Timestamp { get; set; }
+        public int Order { get; set; }
         public string PartitionKey { get; set; } = "2";
 
-        public TaskEntity(string description, Boolean isComplete)
+        public TaskEntity(string description, Boolean isComplete, int order)
         {
             Description = description;
             IsComplete = isComplete;
             Subtasks = new List<Subtask>();
             Id = Guid.NewGuid().ToString();
             Timestamp = DateTime.Now.ToString();
+            Order = order;
         }
     }
 }
