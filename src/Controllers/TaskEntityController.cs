@@ -26,7 +26,7 @@ namespace web_backend.Controllers
             {
                 var task = await _repo.GetTaskByIdAsync(id);
                 if (task == null) return NotFound();
-                TaskEntityDto taskDtoToReturn = new TaskEntityDto(task.Id, task.Timestamp, task.Description, task.IsComplete, task.Subtasks);
+                TaskEntityDto taskDtoToReturn = new TaskEntityDto(task.Id, task.Timestamp, task.Description, task.IsComplete, task.Order, task.Subtasks);
                 return Ok(taskDtoToReturn);
             }
 
@@ -46,7 +46,7 @@ namespace web_backend.Controllers
                 var taskDtosToReturn = new List<TaskEntityDto>();
                 foreach (var task in tasksFromDb)
                 {
-                    taskDtosToReturn.Add(new TaskEntityDto(task.Id, task.Timestamp, task.Description, task.IsComplete, task.Subtasks));
+                    taskDtosToReturn.Add(new TaskEntityDto(task.Id, task.Timestamp, task.Description, task.IsComplete, task.Order, task.Subtasks));
                 }
                 return Ok(taskDtosToReturn);
             }
@@ -64,10 +64,12 @@ namespace web_backend.Controllers
         {
             try
             {
-                var taskEntity = new TaskEntity(task.Description, false);
+                var taskEntity = new TaskEntity(task.Description, false, task.Order);
                 _repo.AddTask(taskEntity);
                 await _repo.SaveChangesAsync();
-                var taskToReturn = new TaskEntityDto(taskEntity.Id, taskEntity.Timestamp, taskEntity.Description, taskEntity.IsComplete, taskEntity.Subtasks);
+                var taskToReturn = new TaskEntityDto(
+                    taskEntity.Id, taskEntity.Timestamp, taskEntity.Description,
+                    taskEntity.IsComplete, taskEntity.Order, taskEntity.Subtasks);
                 return CreatedAtRoute("GetTasks", taskToReturn);
             }
 
@@ -115,7 +117,9 @@ namespace web_backend.Controllers
                 _repo.UpdateTask(existingTask);
                 await _repo.SaveChangesAsync();
 
-                var updatedTask = new TaskEntityDto(existingTask.Id, existingTask.Timestamp, existingTask.Description, existingTask.IsComplete, existingTask.Subtasks);
+                var updatedTask = new TaskEntityDto(
+                    existingTask.Id, existingTask.Timestamp, existingTask.Description, existingTask.IsComplete, 
+                    existingTask.Order, existingTask.Subtasks);
                 return Ok(updatedTask);
             }
 
@@ -143,7 +147,37 @@ namespace web_backend.Controllers
                 _repo.UpdateTask(existingTask);
                 await _repo.SaveChangesAsync();
 
-                var updatedTask = new TaskEntityDto(existingTask.Id, existingTask.Timestamp, existingTask.Description, existingTask.IsComplete, existingTask.Subtasks);
+                var updatedTask = new TaskEntityDto(
+                    existingTask.Id, existingTask.Timestamp, existingTask.Description, 
+                    existingTask.IsComplete, existingTask.Order, existingTask.Subtasks);
+                return Ok(updatedTask);
+            }
+
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+        [HttpPatch("{id}/order")]
+        public async Task<ActionResult<TaskEntityDto>> UpdateTaskOrder(string id, TaskEntityUpdateOrderDto taskUpdateDto)
+        {
+            try
+            {
+                var existingTask = await _repo.GetTaskByIdAsync(id);
+
+                if (existingTask == null)
+                {
+                    return NotFound();
+                }
+
+                _repo.UpdateTaskOrder(existingTask, taskUpdateDto.Order);
+
+                await _repo.SaveChangesAsync();
+
+                var updatedTask = new TaskEntityDto(
+                    existingTask.Id, existingTask.Timestamp, existingTask.Description,
+                    existingTask.IsComplete, existingTask.Order, existingTask.Subtasks);
                 return Ok(updatedTask);
             }
 

@@ -52,6 +52,7 @@ namespace web_backend.Services
         {
             return await _context.Tasks.ToListAsync();
         }
+
         public async Task<TaskEntity> GetTaskByIdAsync(string taskId)
         {
             try
@@ -63,6 +64,15 @@ namespace web_backend.Services
             {
                 Console.WriteLine(ex);
                 return null;
+            }
+        }
+
+        public void ReorderTasks()
+        {
+            var orderedTasks = _context.Tasks.OrderBy(t => t.Order).ToList();
+            for (int i = 0; i < orderedTasks.Count; i++)
+            {
+                orderedTasks[i].Order = i;
             }
         }
 
@@ -79,6 +89,24 @@ namespace web_backend.Services
         public void UpdateTask(TaskEntity task)
         {
             _context.Tasks.Update(task);
+        }
+
+        public void UpdateTaskOrder(TaskEntity task, int newOrder)
+        {
+            var affectedTasks = _context.Tasks
+                .Where(t => t.Order >= newOrder)
+                .OrderBy(t => t.Order)
+                .ToList();
+
+            // Update the order of the dragged task
+            task.Order = newOrder;
+            UpdateTask(task);
+
+            // Update the order of the affected tasks
+            foreach (var affectedTask in affectedTasks)
+            {
+                affectedTask.Order++;
+            } 
         }
 
         // Subtask methods

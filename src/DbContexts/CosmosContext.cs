@@ -30,7 +30,7 @@ namespace web_backend.DbContexts
             // Tasks
             modelBuilder.Entity<TaskEntity>()
                 .HasData(
-                    new TaskEntity("My first task from DB", false));
+                    new TaskEntity("My first task from DB", false, 1));
             modelBuilder.HasDefaultContainer("TaskEntity").HasManualThroughput(400);
             modelBuilder.Entity<TaskEntity>().HasKey(t => t.Id);
             modelBuilder.Entity<TaskEntity>().ToContainer("TaskEntity");
