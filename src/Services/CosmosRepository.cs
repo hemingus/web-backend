@@ -50,7 +50,7 @@ namespace web_backend.Services
 
         public async Task<IEnumerable<TaskEntity>> GetTasksAsync()
         {
-            return await _context.Tasks.ToListAsync();
+            return await _context.Tasks.OrderBy(t => t.Order).ToListAsync();
         }
 
         public async Task<TaskEntity> GetTaskByIdAsync(string taskId)
@@ -91,22 +91,17 @@ namespace web_backend.Services
             _context.Tasks.Update(task);
         }
 
-        public void UpdateTaskOrder(TaskEntity task, int newOrder)
+        public void UpdateTaskOrder(int newOrder)
         {
             var affectedTasks = _context.Tasks
                 .Where(t => t.Order >= newOrder)
                 .OrderBy(t => t.Order)
                 .ToList();
 
-            // Update the order of the dragged task
-            task.Order = newOrder;
-            UpdateTask(task);
-
-            // Update the order of the affected tasks
             foreach (var affectedTask in affectedTasks)
             {
                 affectedTask.Order++;
-            } 
+            }
         }
 
         // Subtask methods

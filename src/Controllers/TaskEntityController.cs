@@ -171,7 +171,12 @@ namespace web_backend.Controllers
                     return NotFound();
                 }
 
-                _repo.UpdateTaskOrder(existingTask, taskUpdateDto.Order);
+                _repo.UpdateTaskOrder(taskUpdateDto.Order);
+                existingTask.Order = taskUpdateDto.Order;
+                await _repo.SaveChangesAsync();
+                _repo.UpdateTask(existingTask);
+                await _repo.SaveChangesAsync();
+                _repo.ReorderTasks();
 
                 await _repo.SaveChangesAsync();
 
