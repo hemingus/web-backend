@@ -91,7 +91,20 @@ namespace web_backend.Services
             _context.Tasks.Update(task);
         }
 
-        public void UpdateTaskOrder(int newOrder)
+        public void UpdateTaskOrderPull(int newOrder)
+        {
+            var affectedTasks = _context.Tasks
+                .Where(t => t.Order <= newOrder)
+                .OrderBy(t => t.Order)
+                .ToList();
+
+            foreach (var affectedTask in affectedTasks)
+            {
+                affectedTask.Order--;
+            }
+        }
+
+        public void UpdateTaskOrderPush(int newOrder)
         {
             var affectedTasks = _context.Tasks
                 .Where(t => t.Order >= newOrder)

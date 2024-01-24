@@ -170,8 +170,14 @@ namespace web_backend.Controllers
                 {
                     return NotFound();
                 }
-
-                _repo.UpdateTaskOrder(taskUpdateDto.Order);
+                if (existingTask.Order > taskUpdateDto.Order)
+                {
+                    _repo.UpdateTaskOrderPush(taskUpdateDto.Order);
+                }
+                else
+                {
+                    _repo.UpdateTaskOrderPull(taskUpdateDto.Order);
+                }
                 existingTask.Order = taskUpdateDto.Order;
                 await _repo.SaveChangesAsync();
                 _repo.UpdateTask(existingTask);
