@@ -89,6 +89,7 @@ namespace web_backend.Controllers
                 var task = await _repo.GetTaskByIdAsync(id);
                 if (task == null) return NotFound();
                 _repo.RemoveTask(task);
+                await _repo.SaveChangesAsync();
                 _repo.ReorderTasks();
                 await _repo.SaveChangesAsync();
                 return NoContent();
