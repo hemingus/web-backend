@@ -70,9 +70,9 @@ namespace web_backend.Services
         public void ReorderTasks()
         {
             var orderedTasks = _context.Tasks.OrderBy(t => t.Order).ToList();
-            for (int i = 1; i < orderedTasks.Count; i++)
+            for (int i = 0; i < orderedTasks.Count; i++)
             {
-                orderedTasks[i].Order = i;
+                orderedTasks[i].Order = i+1;
             }
         }
 
