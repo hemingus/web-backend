@@ -192,7 +192,7 @@ namespace web_backend.Controllers
                 }
                 await _repo.SaveChangesAsync();
                 existingSubtask.Order = subtaskUpdateDto.Order;
-                _repo.UpdateTask(task);
+                _repo.UpdateSubtask(existingSubtask);
                 await _repo.SaveChangesAsync();
                 _repo.ReorderSubtasks(task);
                 await _repo.SaveChangesAsync();
