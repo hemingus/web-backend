@@ -126,7 +126,6 @@ namespace web_backend.Services
             {
                 orderedSubtasks[i].Order = i + 1;
             }
-            task.Subtasks = orderedSubtasks;
         }
         public void UpdateSubtaskOrderPush(TaskEntity task, int newOrder)
         {
