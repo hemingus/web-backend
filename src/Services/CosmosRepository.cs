@@ -131,7 +131,7 @@ namespace web_backend.Services
         public void UpdateSubtaskOrderPush(TaskEntity task, int newOrder)
         {
             var affectedSubtasks = task.Subtasks
-                .Where(t => t.Order <= newOrder)
+                .Where(t => t.Order >= newOrder)
                 .OrderBy(t => t.Order)
                 .ToList();
 
@@ -144,7 +144,7 @@ namespace web_backend.Services
         public void UpdateSubtaskOrderPull(TaskEntity task, int newOrder)
         {
             var affectedSubtasks = task.Subtasks
-                .Where(t => t.Order >= newOrder)
+                .Where(t => t.Order <= newOrder)
                 .OrderBy(t => t.Order)
                 .ToList();
 
