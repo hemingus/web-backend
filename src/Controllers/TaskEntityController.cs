@@ -44,6 +44,7 @@ namespace web_backend.Controllers
             {
                 var tasksFromDb = await _repo.GetTasksAsync();
                 var taskDtosToReturn = new List<TaskEntityDto>();
+                
                 foreach (var task in tasksFromDb)
                 {
                     taskDtosToReturn.Add(new TaskEntityDto(task.Id, task.Timestamp, task.Description, task.IsComplete, task.Order, task.Subtasks));

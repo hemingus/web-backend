@@ -30,7 +30,9 @@ namespace web_backend.Controllers
                     return NotFound();
                 }
                 var subtask = _repo.GetSubtaskById(task, subtaskId);
-                var subtaskToReturn = new SubtaskDto(subtask.TaskId, subtask.Id, subtask.Timestamp, subtask.Description, subtask.IsComplete, subtask.Steps);
+                var subtaskToReturn = new SubtaskDto(
+                    subtask.TaskId, subtask.Id, subtask.Timestamp, subtask.Description, 
+                    subtask.IsComplete, subtask.Steps, subtask.Order);
                 
                 return Ok(subtaskToReturn);
             }
@@ -72,7 +74,7 @@ namespace web_backend.Controllers
                 {
                     return NotFound();
                 }
-                var subtask = new Subtask(taskId, subtaskForCreation.Description);
+                var subtask = new Subtask(taskId, subtaskForCreation.Description, subtaskForCreation.Order);
                 _repo.AddSubtask(task, subtask);
                 await _repo.SaveChangesAsync();
                 return NoContent();
@@ -97,6 +99,8 @@ namespace web_backend.Controllers
                     return NotFound();
                 }
                 _repo.RemoveSubtask(task, subtaskId);
+                await _repo.SaveChangesAsync();
+                _repo.ReorderSubtasks(task);
                 await _repo.SaveChangesAsync();
                 return NoContent();
             }
@@ -153,6 +157,44 @@ namespace web_backend.Controllers
                 }
                 existingSubtask.Description = subtaskUpdateDto.Description;
                 _repo.UpdateTask(task);
+                await _repo.SaveChangesAsync();
+                return NoContent();
+            }
+
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpPatch("{subtaskId}/order")]
+        public async Task<IActionResult> UpdateSubtaskOrder(string taskId, string subtaskId, SubtaskUpdateOrderDto subtaskUpdateDto)
+        {
+            try
+            {
+                var task = await _repo.GetTaskByIdAsync(taskId);
+                if (task == null)
+                {
+                    return NotFound();
+                }
+                var existingSubtask = _repo.GetSubtaskById(task, subtaskId);
+                if (existingSubtask == null)
+                {
+                    return NotFound();
+                }
+                if (existingSubtask.Order > subtaskUpdateDto.Order)
+                {
+                    _repo.UpdateSubtaskOrderPush(task, subtaskUpdateDto.Order);
+                } else
+                {
+                    _repo.UpdateSubtaskOrderPull(task, subtaskUpdateDto.Order);
+                }
+                await _repo.SaveChangesAsync();
+                existingSubtask.Order = subtaskUpdateDto.Order;
+                _repo.UpdateTask(task);
+                await _repo.SaveChangesAsync();
+                _repo.ReorderSubtasks(task);
                 await _repo.SaveChangesAsync();
                 return NoContent();
             }

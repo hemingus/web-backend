@@ -22,6 +22,9 @@ namespace web_backend.Services
         // Subtask
         IEnumerable<Subtask> GetSubtasks(TaskEntity task);
         Subtask GetSubtaskById(TaskEntity task, string subtaskId);
+        void UpdateSubtaskOrderPush(TaskEntity task, int newOrder);
+        void UpdateSubtaskOrderPull(TaskEntity task, int newOrder);
+        void ReorderSubtasks(TaskEntity task);
         void AddSubtask(TaskEntity task, Subtask subtask);
         void RemoveSubtask(TaskEntity task, string subtaskId);
         void UpdateSubtask(Subtask subtask);
