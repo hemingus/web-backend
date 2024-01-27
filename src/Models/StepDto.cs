@@ -8,8 +8,9 @@
         public string Description { get; set; }
         public Boolean IsComplete { get; set; }
         public string Timestamp { get; set; }
+        public int Order { get; set; }
 
-        public StepDto(string taskId, string subtaskId, string id, string timestamp, string description, Boolean isComplete)
+        public StepDto(string taskId, string subtaskId, string id, string timestamp, string description, Boolean isComplete, int order)
         {
             TaskId = taskId;
             SubtaskId = subtaskId;
@@ -17,6 +18,7 @@
             Description = description;
             IsComplete = isComplete;
             Timestamp = timestamp;
+            Order = order;
         }
     }
 }
