@@ -114,6 +114,7 @@ namespace web_backend.Controllers
                     return NotFound(); // Subtask with the provided ID not found
                 }
                 _repo.RemoveStep(subtask, id);
+                _repo.ReorderSteps(subtask);
                 await _repo.SaveChangesAsync();
                 return NoContent();
             }
