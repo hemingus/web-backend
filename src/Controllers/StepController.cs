@@ -85,7 +85,7 @@ namespace web_backend.Controllers
                 {
                     return NotFound(); // Subtask with the provided ID not found
                 }
-                Step step = new Step(taskId, subtaskId, stepForCreation.Description);
+                Step step = new Step(taskId, subtaskId, stepForCreation.Description, stepForCreation.Order);
                 _repo.AddStep(subtask, step);
                 await _repo.SaveChangesAsync();
                 return NoContent();
@@ -179,6 +179,48 @@ namespace web_backend.Controllers
                 existingStep.Description = stepUpdateDto.Description;
                 _repo.UpdateTask(task);
                 await _repo.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpPatch("{id}/order")]
+        public async Task<IActionResult> UpdateStepOrder(string taskId, string subtaskId, string id, StepUpdateOrderDto stepUpdateDto)
+        {
+            try
+            {
+                var task = await _repo.GetTaskByIdAsync(taskId);
+                if (task == null)
+                {
+                    return NotFound(); // TaskEntity with the provided ID not found
+                }
+                var subtask = _repo.GetSubtaskById(task, subtaskId);
+                if (subtask == null)
+                {
+                    return NotFound(); // Subtask with the provided ID not found
+                }
+                var existingStep = _repo.GetStepById(subtask, id);
+                if (existingStep == null)
+                {
+                    return NotFound(); // Step with the provided ID not found
+                }
+                if (existingStep.Order > stepUpdateDto.Order)
+                {
+                    _repo.UpdateStepOrderPush(subtask, stepUpdateDto.Order);
+                }
+                else
+                {
+                    _repo.UpdateStepOrderPull(subtask, stepUpdateDto.Order);
+                }
+                existingStep.Order = stepUpdateDto.Order;
+                _repo.UpdateTask(task);
+                _repo.ReorderSteps(subtask);
+                await _repo.SaveChangesAsync();
+                
                 return NoContent();
             }
             catch (Exception ex)

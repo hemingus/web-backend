@@ -200,6 +200,41 @@ namespace web_backend.Services
             return step;
         }
 
+        public void UpdateStepOrderPush(Subtask subtask, int newOrder)
+        {
+            var affectedSteps = subtask.Steps
+                .Where(t => t.Order >= newOrder)
+                .OrderBy(t => t.Order)
+                .ToList();
+
+            foreach (var affectedStep in affectedSteps)
+            {
+                affectedStep.Order++;
+            }
+        }
+
+        public void UpdateStepOrderPull(Subtask subtask, int newOrder)
+        {
+            var affectedSteps = subtask.Steps
+                .Where(t => t.Order <= newOrder)
+                .OrderBy(t => t.Order)
+                .ToList();
+
+            foreach (var affectedStep in affectedSteps)
+            {
+                affectedStep.Order--;
+            }
+        }
+
+        public void ReorderSteps(Subtask subtask)
+        {
+            var orderedSteps = subtask.Steps.OrderBy(t => t.Order).ToList();
+            for (int i = 0; i < orderedSteps.Count(); i++)
+            {
+                orderedSteps[i].Order = i + 1;
+            }
+        }
+
         public void AddStep(Subtask subtask, Step step)
         {
             subtask.Steps.Add(step);
@@ -221,5 +256,6 @@ namespace web_backend.Services
         {
             return (await _context.SaveChangesAsync() >= 0);
         }
+
     }
 }

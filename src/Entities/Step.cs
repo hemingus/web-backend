@@ -8,8 +8,9 @@
         public string Description { get; set; }
         public Boolean IsComplete { get; set; }
         public string Timestamp { get; set; }
+        public int Order { get; set; }
 
-        public Step(string taskId, string subtaskId, string description)
+        public Step(string taskId, string subtaskId, string description, int order)
         {
             Id = Guid.NewGuid().ToString();
             SubtaskId = subtaskId;
@@ -17,6 +18,7 @@
             Description = description;
             IsComplete = false;
             Timestamp = DateTime.Now.ToString();
+            Order = order;
         }
     }
 }

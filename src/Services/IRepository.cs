@@ -32,6 +32,9 @@ namespace web_backend.Services
         // Step
         IEnumerable<Step> GetSteps(Subtask subtask);
         Step GetStepById(Subtask subtask, string stepId);
+        void UpdateStepOrderPush(Subtask subtask, int newOrder);
+        void UpdateStepOrderPull(Subtask subtask, int newOrder);
+        void ReorderSteps(Subtask subtask);
         void AddStep(Subtask subtask, Step step);
         void RemoveStep(Subtask subtask, string stepId);
         void UpdateStep(Step step);
