@@ -10,6 +10,9 @@
         public int Order { get; set; }
         public string PartitionKey { get; set; } = "2";
 
+        // New: owner identifier to associate tasks with a user
+        public string OwnerId { get; set; } = string.Empty;
+
         public TaskEntity(string description, Boolean isComplete, int order)
         {
             Description = description;

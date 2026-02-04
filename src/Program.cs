@@ -2,6 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Cosmos;
 using web_backend.DbContexts;
 using web_backend.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +22,36 @@ builder.Services.AddDbContextFactory<CosmosContext>(optionsBuilder => {
         );
     });
 
+// JWT authentication configuration.
+// Ensure you set configuration keys: Jwt:Key, Jwt:Issuer, Jwt:Audience (for production use secure storage)
+var jwtKey = builder.Configuration["Jwt:Key"];
+var jwtIssuer = builder.Configuration["Jwt:Issuer"];
+var jwtAudience = builder.Configuration["Jwt:Audience"];
+
+if (!string.IsNullOrEmpty(jwtKey))
+{
+    builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.RequireHttpsMetadata = true;
+        options.SaveToken = true;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            ValidateIssuer = !string.IsNullOrEmpty(jwtIssuer),
+            ValidIssuer = jwtIssuer,
+            ValidateAudience = !string.IsNullOrEmpty(jwtAudience),
+            ValidAudience = jwtAudience,
+            ValidateLifetime = true
+        };
+    });
+}
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -32,9 +65,8 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 
+app.UseAuthentication(); // <-- ensure authentication runs before authorization
 app.UseAuthorization();
-
-//app.MapControllers();
 
 app.UseEndpoints(endpoints => 
     endpoints.MapControllers());

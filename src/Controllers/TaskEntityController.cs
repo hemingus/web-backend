@@ -1,14 +1,17 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿    using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 using System.Collections.Specialized;
 using web_backend.Entities;
 using web_backend.Models;
 using web_backend.Services;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace web_backend.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [Authorize] // Require authenticated users
     public class TaskEntityController : Controller
     {
         private readonly IRepository _repo;
@@ -19,12 +22,21 @@ namespace web_backend.Controllers
             _repo = repo ?? throw new ArgumentNullException(nameof(repo));
         }
 
+        private string GetUserId()
+        {
+            // Try common claim types (sub or NameIdentifier)
+            var sub = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrEmpty(sub)) return sub;
+            return User.FindFirst("sub")?.Value ?? string.Empty;
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTaskById(string id)
         {
             try
             {
-                var task = await _repo.GetTaskByIdAsync(id);
+                var ownerId = GetUserId();
+                var task = await _repo.GetTaskByIdAsync(id, ownerId);
                 if (task == null) return NotFound();
                 TaskEntityDto taskDtoToReturn = new TaskEntityDto(task.Id, task.Timestamp, task.Description, task.IsComplete, task.Order, task.Subtasks);
                 return Ok(taskDtoToReturn);
@@ -42,7 +54,8 @@ namespace web_backend.Controllers
         {
             try
             {
-                var tasksFromDb = await _repo.GetTasksAsync();
+                var ownerId = GetUserId();
+                var tasksFromDb = await _repo.GetTasksAsync(ownerId);
                 var taskDtosToReturn = new List<TaskEntityDto>();
                 
                 foreach (var task in tasksFromDb)
@@ -65,7 +78,9 @@ namespace web_backend.Controllers
         {
             try
             {
+                var ownerId = GetUserId();
                 var taskEntity = new TaskEntity(task.Description, false, task.Order);
+                taskEntity.OwnerId = ownerId; // associate with the logged-in user
                 _repo.AddTask(taskEntity);
                 await _repo.SaveChangesAsync();
                 var taskToReturn = new TaskEntityDto(
@@ -87,11 +102,12 @@ namespace web_backend.Controllers
         {
             try
             {
-                var task = await _repo.GetTaskByIdAsync(id);
+                var ownerId = GetUserId();
+                var task = await _repo.GetTaskByIdAsync(id, ownerId);
                 if (task == null) return NotFound();
                 _repo.RemoveTask(task);
                 await _repo.SaveChangesAsync();
-                _repo.ReorderTasks();
+                _repo.ReorderTasks(ownerId);
                 await _repo.SaveChangesAsync();
                 return NoContent();
             }
@@ -108,7 +124,8 @@ namespace web_backend.Controllers
         {
             try
             {
-                var existingTask = await _repo.GetTaskByIdAsync(id);
+                var ownerId = GetUserId();
+                var existingTask = await _repo.GetTaskByIdAsync(id, ownerId);
 
                 if (existingTask == null)
                 {
@@ -138,7 +155,8 @@ namespace web_backend.Controllers
         {
             try
             {
-                var existingTask = await _repo.GetTaskByIdAsync(id);
+                var ownerId = GetUserId();
+                var existingTask = await _repo.GetTaskByIdAsync(id, ownerId);
 
                 if (existingTask == null)
                 {
@@ -167,7 +185,8 @@ namespace web_backend.Controllers
         {
             try
             {
-                var existingTask = await _repo.GetTaskByIdAsync(id);
+                var ownerId = GetUserId();
+                var existingTask = await _repo.GetTaskByIdAsync(id, ownerId);
 
                 if (existingTask == null)
                 {
@@ -175,17 +194,17 @@ namespace web_backend.Controllers
                 }
                 if (existingTask.Order > taskUpdateDto.Order)
                 {
-                    _repo.UpdateTaskOrderPush(taskUpdateDto.Order);
+                    _repo.UpdateTaskOrderPush(ownerId, taskUpdateDto.Order);
                 }
                 else
                 {
-                    _repo.UpdateTaskOrderPull(taskUpdateDto.Order);
+                    _repo.UpdateTaskOrderPull(ownerId, taskUpdateDto.Order);
                 }
                 existingTask.Order = taskUpdateDto.Order;
                 await _repo.SaveChangesAsync();
                 _repo.UpdateTask(existingTask);
                 await _repo.SaveChangesAsync();
-                _repo.ReorderTasks();
+                _repo.ReorderTasks(ownerId);
 
                 await _repo.SaveChangesAsync();
 

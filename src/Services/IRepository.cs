@@ -9,12 +9,12 @@ namespace web_backend.Services
         Task<Comment> GetCommentByIdAsync(string commentId);
         void AddComment(Comment comment);
         void RemoveComment(Comment comment);
-        // TaskEntity
-        Task<IEnumerable<TaskEntity>> GetTasksAsync();
-        Task<TaskEntity> GetTaskByIdAsync(string taskId);
-        void UpdateTaskOrderPush(int newOrder);
-        void UpdateTaskOrderPull(int newOrder);
-        void ReorderTasks();
+        // TaskEntity - now owner-aware
+        Task<IEnumerable<TaskEntity>> GetTasksAsync(string ownerId);
+        Task<TaskEntity> GetTaskByIdAsync(string taskId, string ownerId);
+        void UpdateTaskOrderPush(string ownerId, int newOrder);
+        void UpdateTaskOrderPull(string ownerId, int newOrder);
+        void ReorderTasks(string ownerId);
         void AddTask(TaskEntity task);
         void RemoveTask(TaskEntity task);
         void UpdateTask(TaskEntity task);

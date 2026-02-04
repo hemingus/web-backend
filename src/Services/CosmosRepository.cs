@@ -46,18 +46,22 @@ namespace web_backend.Services
         }
 
 
-        // TaskEntity methods
+        // TaskEntity methods (owner-aware)
 
-        public async Task<IEnumerable<TaskEntity>> GetTasksAsync()
+        public async Task<IEnumerable<TaskEntity>> GetTasksAsync(string ownerId)
         {
-            return await _context.Tasks.OrderBy(t => t.Order).ToListAsync();
+            return await _context.Tasks
+                .Where(t => t.OwnerId == ownerId)
+                .OrderBy(t => t.Order)
+                .ToListAsync();
         }
 
-        public async Task<TaskEntity> GetTaskByIdAsync(string taskId)
+        public async Task<TaskEntity> GetTaskByIdAsync(string taskId, string ownerId)
         {
             try
             {
-                TaskEntity task = await _context.Tasks.SingleOrDefaultAsync(t => t.Id == taskId);
+                TaskEntity task = await _context.Tasks
+                    .SingleOrDefaultAsync(t => t.Id == taskId && t.OwnerId == ownerId);
                 return task;
             }
             catch (Exception ex)
@@ -67,9 +71,12 @@ namespace web_backend.Services
             }
         }
 
-        public void ReorderTasks()
+        public void ReorderTasks(string ownerId)
         {
-            var orderedTasks = _context.Tasks.OrderBy(t => t.Order).ToList();
+            var orderedTasks = _context.Tasks
+                .Where(t => t.OwnerId == ownerId)
+                .OrderBy(t => t.Order)
+                .ToList();
             for (int i = 0; i < orderedTasks.Count; i++)
             {
                 orderedTasks[i].Order = i+1;
@@ -91,10 +98,10 @@ namespace web_backend.Services
             _context.Tasks.Update(task);
         }
 
-        public void UpdateTaskOrderPull(int newOrder)
+        public void UpdateTaskOrderPull(string ownerId, int newOrder)
         {
             var affectedTasks = _context.Tasks
-                .Where(t => t.Order <= newOrder)
+                .Where(t => t.OwnerId == ownerId && t.Order <= newOrder)
                 .OrderBy(t => t.Order)
                 .ToList();
 
@@ -104,10 +111,10 @@ namespace web_backend.Services
             }
         }
 
-        public void UpdateTaskOrderPush(int newOrder)
+        public void UpdateTaskOrderPush(string ownerId, int newOrder)
         {
             var affectedTasks = _context.Tasks
-                .Where(t => t.Order >= newOrder)
+                .Where(t => t.OwnerId == ownerId && t.Order >= newOrder)
                 .OrderBy(t => t.Order)
                 .ToList();
 
