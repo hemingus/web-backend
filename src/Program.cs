@@ -14,7 +14,7 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddScoped<IRepository, CosmosRepository>();
+builder.Services.AddScoped<ITaskEntityRepository, TaskEntityRepository>();
 builder.Services.AddDbContextFactory<CosmosContext>(optionsBuilder => { 
     optionsBuilder.UseCosmos(
         connectionString: builder.Configuration["PROD_COSMOS_CONNECTION_STRING"],
@@ -63,12 +63,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseRouting();
-
-app.UseAuthentication(); // <-- ensure authentication runs before authorization
+app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseEndpoints(endpoints => 
-    endpoints.MapControllers());
+app.MapControllers();
 
 app.Run();
