@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 using System.Collections.Specialized;
-using web_backend.Entities;
 using web_backend.Models;
+using web_backend.Models.DTOs;
 using web_backend.Services;
 
 namespace web_backend.Controllers
@@ -11,10 +11,10 @@ namespace web_backend.Controllers
     [Route("taskentity/{taskId}/subtask/{subtaskId}/step")]
     public class StepController : Controller
     {
-        private readonly IRepository _repo;
+        private readonly ITaskEntityRepository _repo;
         private readonly NameValueCollection settings =
             System.Configuration.ConfigurationManager.AppSettings;
-        public StepController(IRepository repo)
+        public StepController(ITaskEntityRepository repo)
         {
             _repo = repo ?? throw new ArgumentNullException(nameof(repo));
         }

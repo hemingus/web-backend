@@ -2,7 +2,7 @@
 using Microsoft.Azure.Cosmos;
 using System.Collections.Specialized;
 using web_backend.Entities;
-using web_backend.Models;
+using web_backend.Models.DTOs;
 using web_backend.Services;
 
 namespace web_backend.Controllers
@@ -11,11 +11,11 @@ namespace web_backend.Controllers
     [Route("[controller]")] 
     public class CommentController : ControllerBase
     {
-        private readonly IRepository _repo;
+        private readonly ICommentRepository _repo;
         private readonly NameValueCollection settings = 
             System.Configuration.ConfigurationManager.AppSettings;
 
-        public CommentController(IRepository repo)
+        public CommentController(ICommentRepository repo)
         {
             _repo = repo ?? throw new ArgumentNullException(nameof(repo));
         }

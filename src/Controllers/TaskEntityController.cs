@@ -1,11 +1,11 @@
-﻿    using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 using System.Collections.Specialized;
 using web_backend.Entities;
-using web_backend.Models;
 using web_backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using web_backend.Models.DTOs;
 
 namespace web_backend.Controllers
 {
@@ -14,10 +14,10 @@ namespace web_backend.Controllers
     [Authorize] // Require authenticated users
     public class TaskEntityController : Controller
     {
-        private readonly IRepository _repo;
+        private readonly ITaskEntityRepository _repo;
         private readonly NameValueCollection settings =
             System.Configuration.ConfigurationManager.AppSettings;
-        public TaskEntityController(IRepository repo)
+        public TaskEntityController(ITaskEntityRepository repo)
         {
             _repo = repo ?? throw new ArgumentNullException(nameof(repo));
         }

@@ -2,7 +2,7 @@
 using Microsoft.Azure.Cosmos;
 using System.Collections.Specialized;
 using web_backend.Entities;
-using web_backend.Models;
+using web_backend.Models.DTOs;
 using web_backend.Services;
 
 namespace web_backend.Controllers
@@ -11,10 +11,10 @@ namespace web_backend.Controllers
     [Route("taskentity/{taskId}/subtask")]
     public class SubtaskController : Controller
     {
-        private readonly IRepository _repo;
+        private readonly ITaskEntityRepository _repo;
         private readonly NameValueCollection settings =
             System.Configuration.ConfigurationManager.AppSettings;
-        public SubtaskController(IRepository repo)
+        public SubtaskController(ITaskEntityRepository repo)
         {
             _repo = repo ?? throw new ArgumentNullException(nameof(repo));
         }
