@@ -1,22 +1,22 @@
-﻿namespace web_backend.Entities
+﻿namespace web_backend.Models
 {
-    public class Step
+    public class Subtask
     {
-        public string Id { get; set; }
-        public string SubtaskId { get; set; }
         public string TaskId { get; set; }
+        public string Id { get; set; }
         public string Description { get; set; }
         public Boolean IsComplete { get; set; }
         public string Timestamp { get; set; }
         public int Order { get; set; }
+        public ICollection<Step> Steps { get; set; }
 
-        public Step(string taskId, string subtaskId, string description, int order)
+        public Subtask(string taskId, string description, int order)
         {
             Id = Guid.NewGuid().ToString();
-            SubtaskId = subtaskId;
             TaskId = taskId;
             Description = description;
             IsComplete = false;
+            Steps = new List<Step>();
             Timestamp = DateTime.Now.ToString();
             Order = order;
         }
