@@ -12,7 +12,6 @@ namespace web_backend.Entities
         [Required]
         [MaxLength(500)]
         public string PasswordHash { get; set; }
-        public ICollection<TaskEntity> Tasks { get; set; }
         public string PartitionKey { get; set; } = "1";
 
         public User(string username, string passwordHash)
@@ -20,7 +19,6 @@ namespace web_backend.Entities
             UserId = Guid.NewGuid().ToString();
             Username = username;
             PasswordHash = passwordHash;
-            Tasks = new List<TaskEntity>();
         }
     }
 }
