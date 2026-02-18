@@ -5,20 +5,14 @@ namespace web_backend.Entities
     public class User
     {
         [Key]
-        public string UserId { get; set; }
+        public string UserId { get; set; } = Guid.NewGuid().ToString();
+
         [Required]
         [MaxLength(50)]
-        public string Username { get; set; }
+        public string Username { get; set; } = null!;
+
         [Required]
         [MaxLength(500)]
-        public string PasswordHash { get; set; }
-        public string PartitionKey { get; set; } = "1";
-
-        public User(string username, string passwordHash)
-        {
-            UserId = Guid.NewGuid().ToString();
-            Username = username;
-            PasswordHash = passwordHash;
-        }
+        public string PasswordHash { get; set; } = null!;
     }
 }
