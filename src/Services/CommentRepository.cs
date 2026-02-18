@@ -14,6 +14,10 @@ namespace web_backend.Services
             //_context.Database.EnsureDeleted();
             //_context.Database.EnsureCreated();
         }
+        public async Task<IEnumerable<Comment>> GetCommentsAsync()
+        {
+            return await _context.Comments.ToListAsync();
+        }
         public async Task<Comment> GetCommentByIdAsync(string commentId)
         {
             try
@@ -36,6 +40,10 @@ namespace web_backend.Services
         public void RemoveComment(Comment comment)
         {
             _context.Comments.Remove(comment);
+        }
+        public async Task<bool> SaveChangesAsync()
+        {
+            return (await _context.SaveChangesAsync() >= 0);
         }
     }
 }

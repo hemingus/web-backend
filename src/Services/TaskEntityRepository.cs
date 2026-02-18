@@ -16,13 +16,6 @@ namespace web_backend.Services
             //_context.Database.EnsureCreated();
         }
 
-        // Comment methods
-
-         public async Task<IEnumerable<Comment>> GetCommentsAsync()
-        {
-            return await _context.Comments.ToListAsync();
-        }
-
         // TaskEntity methods (owner-aware)
 
         public async Task<IEnumerable<TaskEntity>> GetTasksAsync(string ownerId)
