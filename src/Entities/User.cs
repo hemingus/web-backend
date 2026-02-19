@@ -1,18 +1,36 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace web_backend.Entities
+public class User
 {
-    public class User
+    public string Id { get; private set; } = Guid.NewGuid().ToString();
+   
+    public string? Email { get; private set; }
+    public string Name { get; private set; }
+    public string PasswordHash { get; private set; }
+
+    public DateTimeOffset CreatedAt { get; private set; }
+    public DateTimeOffset UpdatedAt { get; private set; }
+    public DateTimeOffset? LastLoginAt { get; private set; }
+
+    public User(string? email, string name, string passwordHash)
     {
-        [Key]
-        public string UserId { get; set; } = Guid.NewGuid().ToString();
-
-        [Required]
-        [MaxLength(50)]
-        public string Username { get; set; } = null!;
-
-        [Required]
-        [MaxLength(500)]
-        public string PasswordHash { get; set; } = null!;
+        Email = email;
+        Name = name;
+        PasswordHash = passwordHash;
+        CreatedAt = DateTimeOffset.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
     }
+
+    public void UpdateName(string name)
+    {
+        Name = name;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void RegisterLogin()
+    {
+        LastLoginAt = DateTimeOffset.UtcNow;
+    }
+
+    private User() { } // Required for EF Core
 }

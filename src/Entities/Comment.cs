@@ -6,6 +6,7 @@ namespace web_backend.Entities
     {
         [Key]
         public string Id { get; set; }
+        public string OwnerId { get; set; }
         [Required]
         [MaxLength(50)]
         public string Name { get; set; }
@@ -15,12 +16,14 @@ namespace web_backend.Entities
         public string Timestamp { get; set; }
         public string PartitionKey { get; set; } = "1";
 
-        public Comment(string name, string commentBody)
+        public Comment(string name, string commentBody, string ownerId)
         {
             Name = name;
+            OwnerId = ownerId;
             CommentBody = commentBody;
             Id = Guid.NewGuid().ToString();
             Timestamp = DateTime.Now.ToString();
+            OwnerId = ownerId;
         }
     }
 }

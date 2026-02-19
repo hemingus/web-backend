@@ -7,15 +7,17 @@ namespace web_backend.Entities
         [Key]
         public string Id { get; set; }
         [Required]
+        public string OwnerId { get; set; }
         public string Name { get; set; }
         public string? Description { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime UpdatedAt { get; set; }
+        public DateTimeOffset CreatedAt { get; set; }
+        public DateTimeOffset UpdatedAt { get; set; }
 
 
-        public Project(string name, string? description)
+        public Project(string name, string? description, string ownerId)
         {
             Id = Guid.NewGuid().ToString();
+            OwnerId = ownerId;
             Name = name;
             Description = description;
             CreatedAt = DateTime.Now;

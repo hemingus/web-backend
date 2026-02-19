@@ -1,25 +1,21 @@
-﻿using System.ComponentModel.DataAnnotations;
-using web_backend.Models;
+﻿using web_backend.Models;
 
 public class TaskEntity
 {
-    [Key]
-    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public string Id { get; private set; } = Guid.NewGuid().ToString();
+    public DateTimeOffset Timestamp { get; private set; } = DateTime.UtcNow;
+    public string Description { get; private set; }
+    public bool IsComplete { get; private set; } = false;
+    public int Order { get; private set; }
+    public string OwnerId { get; private set; }
+    public string ProjectId { get; private set; }
+    public ICollection<Subtask> Subtasks { get; private set; } = new List<Subtask>();
 
-    [Required, MaxLength(500)]
-    public string Description { get; set; } = null!;
-
-    public bool IsComplete { get; set; }
-
-    public ICollection<Subtask> Subtasks { get; set; } = new List<Subtask>();
-
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-    public int Order { get; set; }
-
-    [Required]
-    public string UserId { get; set; } = null!;
-
-    [Required]
-    public string ProjectId { get; set; } = null!;
+    public TaskEntity(string description, int order, string ownerId, string projectId)
+    {
+        Description = description;
+        Order = order;
+        OwnerId = ownerId;
+        ProjectId = projectId;
+    }
 }
