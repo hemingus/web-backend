@@ -52,14 +52,14 @@ namespace web_backend.DbContexts
                 .HasKey(p => p.Id);
 
             modelBuilder.Entity<Project>()
-                .HasPartitionKey(p => p.UserId);
+                .HasPartitionKey(p => p.OwnerId);
 
             modelBuilder.Entity<Project>()
                 .Property(p => p.Name)
                 .IsRequired();
 
             modelBuilder.Entity<Project>()
-                .Property(p => p.UserId)
+                .Property(p => p.OwnerId)
                 .IsRequired();
 
 
@@ -72,14 +72,14 @@ namespace web_backend.DbContexts
                 .HasKey(t => t.Id);
 
             modelBuilder.Entity<TaskEntity>()
-                .HasPartitionKey(t => t.UserId);
+                .HasPartitionKey(t => t.OwnerId);
 
             modelBuilder.Entity<TaskEntity>()
-                .Property(t => t.Title)
+                .Property(t => t.Description)
                 .IsRequired();
 
             modelBuilder.Entity<TaskEntity>()
-                .Property(t => t.UserId)
+                .Property(t => t.OwnerId)
                 .IsRequired();
 
             modelBuilder.Entity<TaskEntity>()
@@ -96,7 +96,7 @@ namespace web_backend.DbContexts
                 .HasKey(c => c.Id);
 
             modelBuilder.Entity<Comment>()
-                .HasPartitionKey(c => c.UserId);
+                .HasPartitionKey(c => c.OwnerId);
         }
     }
 }
