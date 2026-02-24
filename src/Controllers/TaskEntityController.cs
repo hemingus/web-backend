@@ -74,12 +74,12 @@ namespace web_backend.Controllers
 
         [HttpPost]
         public async Task<ActionResult<TaskEntityDto>> CreateTask(
-            TaskEntityForCreationDto task)
+            TaskEntityForCreationDto task, string projectId)
         {
             try
             {
                 var ownerId = GetUserId();
-                var taskEntity = new TaskEntity(task.Description, false, task.Order);
+                var taskEntity = new TaskEntity(task.Description, false, task.Order, ownerId, projectId);
                 taskEntity.OwnerId = ownerId; // associate with the logged-in user
                 _repo.AddTask(taskEntity);
                 await _repo.SaveChangesAsync();
