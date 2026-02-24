@@ -5,11 +5,11 @@
         public string Id { get; set; }
         public string Description { get; set; }
         public Boolean IsComplete { get; set; }
-        public string Timestamp { get; set; }
+        public DateTimeOffset Timestamp { get; set; }
         public int Order { get; set; }
         public ICollection<Subtask> Subtasks { get; set; }  
 
-        public TaskEntityDto(string id, string timestamp, string description, Boolean isComplete, int order, ICollection<Subtask> subtasks)
+        public TaskEntityDto(string id, DateTimeOffset timestamp, string description, Boolean isComplete, int order, ICollection<Subtask> subtasks)
         {
             Id = id;
             Description = description;
@@ -17,7 +17,6 @@
             Timestamp = timestamp;
             Order = order;
             Subtasks = subtasks;
-            
         }
     }
 }
