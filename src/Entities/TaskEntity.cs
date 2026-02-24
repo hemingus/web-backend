@@ -4,12 +4,12 @@ public class TaskEntity
 {
     public string Id { get; private set; } = Guid.NewGuid().ToString();
     public DateTimeOffset Timestamp { get; private set; } = DateTime.UtcNow;
-    public string Description { get; private set; }
-    public bool IsComplete { get; private set; } = false;
-    public int Order { get; private set; }
-    public string OwnerId { get; private set; }
-    public string ProjectId { get; private set; }
-    public ICollection<Subtask> Subtasks { get; private set; } = new List<Subtask>();
+    public string Description { get; set; }
+    public bool IsComplete { get; set; } = false;
+    public int Order { get; set; }
+    public string OwnerId { get; set; }
+    public string ProjectId { get; set; }
+    public ICollection<Subtask> Subtasks { get; set; } = new List<Subtask>();
 
     public TaskEntity(string description, int order, string ownerId, string projectId)
     {
