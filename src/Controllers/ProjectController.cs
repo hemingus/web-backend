@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using web_backend.DbContexts;
 using web_backend.Entities;
 using web_backend.Services;
+using web_backend.Models.DTOs;
 
 namespace web_backend.Controllers
 {
@@ -19,14 +20,6 @@ namespace web_backend.Controllers
         {
             _contextFactory = contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));
             _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
-        }
-
-        // DTOs kept local for brevity
-        public record ProjectDto(string Id, string Name, string? Description, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt);
-        public class ProjectForCreationDto
-        {
-            public string Name { get; set; } = string.Empty;
-            public string? Description { get; set; }
         }
 
         private string GetUserId()
@@ -46,7 +39,7 @@ namespace web_backend.Controllers
                 .OrderBy(p => p.Name)
                 .ToListAsync();
 
-            var dtos = projects.Select(p => new ProjectDto(p.Id, p.Name, p.Description, p.CreatedAt, p.UpdatedAt));
+            var dtos = projects.Select(p => new ProjectDto(p.Id, p.Name, p.Description, p.CreatedAt));
             return Ok(dtos);
         }
 
@@ -62,7 +55,7 @@ namespace web_backend.Controllers
 
             if (project == null) return NotFound();
 
-            var dto = new ProjectDto(project.Id, project.Name, project.Description, project.CreatedAt, project.UpdatedAt);
+            var dto = new ProjectDto(project.Id, project.Name, project.Description, project.CreatedAt);
             return Ok(dto);
         }
 
@@ -78,20 +71,17 @@ namespace web_backend.Controllers
 
             // Create a Project entity and set OwnerId explicitly
             var project = new Project
-            {
-                Id = Guid.NewGuid().ToString(),
-                Name = request.Name,
-                Description = request.Description,
-                OwnerId = ownerId,
-                CreatedAt = now,
-                UpdatedAt = now
-            };
+            (   
+                request.Name,
+                request.Description,
+                ownerId
+            );
 
             await using var ctx = _contextFactory.CreateDbContext();
             ctx.Projects.Add(project);
             await ctx.SaveChangesAsync();
 
-            var dto = new ProjectDto(project.Id, project.Name, project.Description, project.CreatedAt, project.UpdatedAt);
+            var dto = new Project(project.Id, project.Name, project.Description);
             return CreatedAtAction(nameof(GetProjectById), new { id = project.Id }, dto);
         }
 
