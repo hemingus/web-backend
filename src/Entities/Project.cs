@@ -9,12 +9,11 @@ namespace web_backend.Entities
         [Required]
         public string OwnerId { get; set; }
         public string Name { get; set; }
-        public string? Description { get; set; }
+        public string Description { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
-        public DateTimeOffset UpdatedAt { get; set; }
 
 
-        public Project(string name, string? description, string ownerId)
+        public Project(string name, string description, string ownerId)
         {
             Id = Guid.NewGuid().ToString();
             OwnerId = ownerId;
