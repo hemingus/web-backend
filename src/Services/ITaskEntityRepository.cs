@@ -5,12 +5,12 @@ namespace web_backend.Services
 {
     public interface ITaskEntityRepository
     {
-        // TaskEntity - now owner-aware
-        Task<IEnumerable<TaskEntity>> GetTasksAsync(string ownerId);
-        Task<TaskEntity> GetTaskByIdAsync(string taskId, string ownerId);
-        void UpdateTaskOrderPush(string ownerId, int newOrder);
-        void UpdateTaskOrderPull(string ownerId, int newOrder);
-        void ReorderTasks(string ownerId);
+        // TaskEntity - repository will enforce current-user scoping internally
+        Task<IEnumerable<TaskEntity>> GetTasksAsync();
+        Task<TaskEntity> GetTaskByIdAsync(string taskId);
+        void UpdateTaskOrderPush(int newOrder);
+        void UpdateTaskOrderPull(int newOrder);
+        void ReorderTasks();
         void AddTask(TaskEntity task);
         void RemoveTask(TaskEntity task);
         void UpdateTask(TaskEntity task);

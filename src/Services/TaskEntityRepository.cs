@@ -8,28 +8,35 @@ namespace web_backend.Services
     public class TaskEntityRepository : ITaskEntityRepository
     {
         private readonly CosmosContext _context;
-
-        public TaskEntityRepository(CosmosContext context)
+        private readonly ICurrentUserService _currentUser;
+        public TaskEntityRepository(CosmosContext context, ICurrentUserService currentUser)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
+            _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
             //_context.Database.EnsureDeleted();
             //_context.Database.EnsureCreated();
         }
 
-        // TaskEntity methods (owner-aware)
+        // TaskEntity methods (current-user scoped internally)
 
-        public async Task<IEnumerable<TaskEntity>> GetTasksAsync(string ownerId)
+        public async Task<IEnumerable<TaskEntity>> GetTasksAsync()
         {
+            var ownerId = _currentUser.UserId;
+            if (string.IsNullOrEmpty(ownerId)) return Enumerable.Empty<TaskEntity>();
+
             return await _context.Tasks
                 .Where(t => t.OwnerId == ownerId)
                 .OrderBy(t => t.Order)
                 .ToListAsync();
         }
 
-        public async Task<TaskEntity> GetTaskByIdAsync(string taskId, string ownerId)
+        public async Task<TaskEntity> GetTaskByIdAsync(string taskId)
         {
             try
             {
+                var ownerId = _currentUser.UserId;
+                if (string.IsNullOrEmpty(ownerId)) return null;
+
                 TaskEntity task = await _context.Tasks
                     .SingleOrDefaultAsync(t => t.Id == taskId && t.OwnerId == ownerId);
                 return task;
@@ -41,20 +48,30 @@ namespace web_backend.Services
             }
         }
 
-        public void ReorderTasks(string ownerId)
+        public void ReorderTasks()
         {
+            var ownerId = _currentUser.UserId;
+            if (string.IsNullOrEmpty(ownerId)) return;
+
             var orderedTasks = _context.Tasks
                 .Where(t => t.OwnerId == ownerId)
                 .OrderBy(t => t.Order)
                 .ToList();
             for (int i = 0; i < orderedTasks.Count; i++)
             {
-                orderedTasks[i].Order = i+1;
+                orderedTasks[i].Order = i + 1;
             }
         }
 
         public void AddTask(TaskEntity task)
         {
+            // ensure OwnerId is set to current user
+            var ownerId = _currentUser.UserId;
+            if (!string.IsNullOrEmpty(ownerId) && string.IsNullOrEmpty(task.OwnerId))
+            {
+                task.OwnerId = ownerId;
+            }
+
             _context.Tasks.Add(task);
         }
 
@@ -68,8 +85,11 @@ namespace web_backend.Services
             _context.Tasks.Update(task);
         }
 
-        public void UpdateTaskOrderPull(string ownerId, int newOrder)
+        public void UpdateTaskOrderPull(int newOrder)
         {
+            var ownerId = _currentUser.UserId;
+            if (string.IsNullOrEmpty(ownerId)) return;
+
             var affectedTasks = _context.Tasks
                 .Where(t => t.OwnerId == ownerId && t.Order <= newOrder)
                 .OrderBy(t => t.Order)
@@ -81,8 +101,11 @@ namespace web_backend.Services
             }
         }
 
-        public void UpdateTaskOrderPush(string ownerId, int newOrder)
+        public void UpdateTaskOrderPush(int newOrder)
         {
+            var ownerId = _currentUser.UserId;
+            if (string.IsNullOrEmpty(ownerId)) return;
+
             var affectedTasks = _context.Tasks
                 .Where(t => t.OwnerId == ownerId && t.Order >= newOrder)
                 .OrderBy(t => t.Order)
@@ -137,7 +160,7 @@ namespace web_backend.Services
         public Subtask GetSubtaskById(TaskEntity task, string subtaskId)
         {
             Subtask subtask = task.Subtasks.FirstOrDefault(t => t.Id == subtaskId);
-            if (subtask == null) 
+            if (subtask == null)
             {
                 return null;
             }
