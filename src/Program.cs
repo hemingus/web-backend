@@ -1,29 +1,49 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Cosmos;
-using web_backend.DbContexts;
-using web_backend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using web_backend.DbContexts;
+using web_backend.Entities;
+using web_backend.Services;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddScoped<ITaskEntityRepository, TaskEntityRepository>();
-builder.Services.AddDbContextFactory<CosmosContext>(optionsBuilder => { 
-    optionsBuilder.UseCosmos(
+
+// Register DbContext (scoped) so repositories that inject CosmosContext work.
+// Also register DbContextFactory for controllers/services that prefer factory usage (AuthController uses factory).
+builder.Services.AddDbContext<CosmosContext>(options =>
+{
+    options.UseCosmos(
         connectionString: builder.Configuration["PROD_COSMOS_CONNECTION_STRING"],
         databaseName: builder.Configuration["PROD_COSMOS_DATABASE"]
-        );
-    });
+    );
+});
+builder.Services.AddDbContextFactory<CosmosContext>(options =>
+{
+    options.UseCosmos(
+        connectionString: builder.Configuration["PROD_COSMOS_CONNECTION_STRING"],
+        databaseName: builder.Configuration["PROD_COSMOS_DATABASE"]
+    );
+});
+
+// Register current user service and IHttpContextAccessor
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+// Register password hasher for User (used by AuthController)
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+
+// Register repositories
+builder.Services.AddScoped<ITaskEntityRepository, TaskEntityRepository>();
+builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 
 // JWT authentication configuration.
-// Ensure you set configuration keys: Jwt:Key, Jwt:Issuer, Jwt:Audience (for production use secure storage)
 var jwtKey = builder.Configuration["Jwt:Key"];
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
 var jwtAudience = builder.Configuration["Jwt:Audience"];
@@ -49,12 +69,38 @@ if (!string.IsNullOrEmpty(jwtKey))
             ValidAudience = jwtAudience,
             ValidateLifetime = true
         };
+
+        // Return JSON on auth failures
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = context =>
+            {
+                context.HandleResponse();
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json";
+                return context.Response.WriteAsync("{\"error\":\"Unauthorized\"}");
+            },
+            OnForbidden = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                context.Response.ContentType = "application/json";
+                return context.Response.WriteAsync("{\"error\":\"Forbidden\"}");
+            }
+        };
     });
 }
 
+// Require authentication for all endpoints by default; mark auth endpoints with [AllowAnonymous]
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configure middleware
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -62,11 +108,26 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// JSON status code pages for 401/403 (fallback)
+app.UseStatusCodePages(async ctx =>
+{
+    var resp = ctx.HttpContext.Response;
+    if (resp.StatusCode == StatusCodes.Status401Unauthorized)
+    {
+        resp.ContentType = "application/json";
+        await resp.WriteAsync("{\"error\":\"Unauthorized\"}");
+    }
+    else if (resp.StatusCode == StatusCodes.Status403Forbidden)
+    {
+        resp.ContentType = "application/json";
+        await resp.WriteAsync("{\"error\":\"Forbidden\"}");
+    }
+});
 
 app.MapControllers();
 
