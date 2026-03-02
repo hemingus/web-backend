@@ -1,19 +1,14 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
-using System.Text;
-using web_backend.DbContexts;
-
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using web_backend.DbContexts;
+using web_backend.Entities;
 using web_backend.Models.DTOs;
 
 namespace web_backend.Controllers
@@ -24,19 +19,26 @@ namespace web_backend.Controllers
     {
         private readonly IDbContextFactory<CosmosContext> _contextFactory;
         private readonly IConfiguration _configuration;
+        private readonly IPasswordHasher<User> _passwordHasher;
 
-        public AuthController(IDbContextFactory<CosmosContext> contextFactory, IConfiguration configuration)
+        public AuthController(
+            IDbContextFactory<CosmosContext> contextFactory,
+            IConfiguration configuration,
+            IPasswordHasher<User> passwordHasher)
         {
             _contextFactory = contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _passwordHasher = passwordHasher ?? throw new ArgumentNullException(nameof(passwordHasher));
         }
 
+        // Allow anonymous because global fallback policy will otherwise require auth
         [HttpPost("register")]
+        [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
-            if (dto == null || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password))
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password) || string.IsNullOrWhiteSpace(dto.Name))
             {
-                return BadRequest("Email and password are required.");
+                return BadRequest("Email, name and password are required.");
             }
 
             await using var ctx = _contextFactory.CreateDbContext();
@@ -47,19 +49,19 @@ namespace web_backend.Controllers
                 return Conflict("A user with that email already exists.");
             }
 
-            var hasher = new PasswordHasher<object>();
-            var passwordHash = hasher.HashPassword(null, dto.Password);
-
-            var user = new Entities.User(dto.Email, dto.Name, passwordHash);
+            var user = new User(dto.Email, dto.Name, string.Empty);
+            var passwordHash = _passwordHasher.HashPassword(user, dto.Password);
+            user.SetPasswordHash(passwordHash);
 
             ctx.Users.Add(user);
             await ctx.SaveChangesAsync();
 
             var userDto = new UserDto(user.Id, user.Email, user.Name, user.CreatedAt, user.UpdatedAt);
-            return CreatedAtAction(null, userDto);
+            return Created(string.Empty, userDto);
         }
 
         [HttpPost("login")]
+        [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
             if (dto == null || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password))
@@ -75,27 +77,24 @@ namespace web_backend.Controllers
                 return Unauthorized("Invalid credentials.");
             }
 
-            var hasher = new PasswordHasher<object>();
-            var verify = hasher.VerifyHashedPassword(null, user.PasswordHash, dto.Password);
+            var verify = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password);
             if (verify == PasswordVerificationResult.Failed)
             {
                 return Unauthorized("Invalid credentials.");
             }
 
-            // generate JWT
             var jwtKey = _configuration["Jwt:Key"];
             if (string.IsNullOrEmpty(jwtKey))
             {
-                // If JWT is not configured the server cannot issue tokens
                 return StatusCode(500, "JWT signing key is not configured.");
             }
 
             var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
+                new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub, user.Id),
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
+                new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
