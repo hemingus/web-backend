@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 using System.Collections.Specialized;
 using web_backend.Models;
@@ -9,6 +10,7 @@ namespace web_backend.Controllers
 {
     [ApiController]
     [Route("taskentity/{taskId}/subtask/{subtaskId}/step")]
+    [Authorize]
     public class StepController : Controller
     {
         private readonly ITaskEntityRepository _repo;
