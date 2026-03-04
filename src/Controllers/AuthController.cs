@@ -57,7 +57,7 @@ namespace web_backend.Controllers
             await ctx.SaveChangesAsync();
 
             var userDto = new UserDto(user.Id, user.Email, user.Name, user.CreatedAt, user.UpdatedAt);
-            return Created(string.Empty, userDto);
+            return Ok(userDto);
         }
 
         [HttpPost("login")]
