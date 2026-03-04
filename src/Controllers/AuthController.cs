@@ -15,6 +15,7 @@ namespace web_backend.Controllers
 {
     [ApiController]
     [Route("auth")]
+    [Authorize]
     public class AuthController : ControllerBase
     {
         private readonly IDbContextFactory<CosmosContext> _contextFactory;
