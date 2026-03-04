@@ -5,10 +5,13 @@
         public string Name { get; set; }
         public string CommentBody { get; set; }
 
-        public CommentForCreationDto(string name, string commentBody)
+        public string OwnerId { get; private set; }
+
+        public CommentForCreationDto(string name, string commentBody, string ownerId)
         {
             Name = name;
             CommentBody = commentBody;
+            OwnerId = ownerId;
         }
     }
 }
