@@ -15,20 +15,45 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+
+
+// Choose Cosmos connection based on environment
+string cosmosConnectionString;
+string cosmosDatabase;
+
+if (builder.Environment.IsDevelopment())
+{
+    // Development: prefer explicit DEV_* keys (emulator)
+    cosmosConnectionString = builder.Configuration["DEV_COSMOS_CONNECTION_STRING"];
+    cosmosDatabase = builder.Configuration["DEV_COSMOS_DATABASE"];
+}
+else
+{
+    // Production: prefer environment variables, then PROD_* keys
+    cosmosConnectionString = builder.Configuration["PROD_COSMOS_CONNECTION_STRING"];
+    cosmosDatabase = builder.Configuration["PROD_COSMOS_DATABASE"];
+       
+}
+
+if (string.IsNullOrEmpty(cosmosConnectionString))
+{
+    throw new InvalidOperationException("Cosmos DB connection string not configured. Set DEV_COSMOS_CONNECTION_STRING (development) or COSMOS_CONNECTION_STRING/PROD_COSMOS_CONNECTION_STRING (production).");
+}
+
 // Register DbContext (scoped) so repositories that inject CosmosContext work.
 // Also register DbContextFactory for controllers/services that prefer factory usage (AuthController uses factory).
 builder.Services.AddDbContext<CosmosContext>(options =>
 {
     options.UseCosmos(
-        connectionString: builder.Configuration["PROD_COSMOS_CONNECTION_STRING"],
-        databaseName: builder.Configuration["PROD_COSMOS_DATABASE"]
+        connectionString: cosmosConnectionString,
+        databaseName: cosmosDatabase
     );
 });
 builder.Services.AddDbContextFactory<CosmosContext>(options =>
 {
     options.UseCosmos(
-        connectionString: builder.Configuration["PROD_COSMOS_CONNECTION_STRING"],
-        databaseName: builder.Configuration["PROD_COSMOS_DATABASE"]
+        connectionString: cosmosConnectionString,
+        databaseName: cosmosDatabase
     );
 });
 
