@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 using System.Collections.Specialized;
 using web_backend.Entities;
+using web_backend.Models;
 using web_backend.Models.DTOs;
 using web_backend.Services;
 
@@ -9,6 +11,7 @@ namespace web_backend.Controllers
 {
     [ApiController]
     [Route("taskentity/{taskId}/subtask")]
+    [Authorize]
     public class SubtaskController : Controller
     {
         private readonly ITaskEntityRepository _repo;
