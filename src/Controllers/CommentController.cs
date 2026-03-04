@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 using System.Collections.Specialized;
 using web_backend.Entities;
@@ -8,7 +9,8 @@ using web_backend.Services;
 namespace web_backend.Controllers
 {
     [ApiController]
-    [Route("[controller]")] 
+    [Route("[controller]")]
+    [Authorize]
     public class CommentController : ControllerBase
     {
         private readonly ICommentRepository _repo;
@@ -45,7 +47,7 @@ namespace web_backend.Controllers
         public async Task<ActionResult<CommentDto>> createComment(
             CommentForCreationDto comment)
         {
-            var commentEntity = new Comment(comment.Name, comment.CommentBody);
+            var commentEntity = new Comment(comment.Name, comment.CommentBody, comment.OwnerId);
             _repo.AddComment(commentEntity);
             await _repo.SaveChangesAsync();
             var commentToReturn = new CommentDto(commentEntity.Id, commentEntity.Timestamp, commentEntity.Name, commentEntity.CommentBody);
