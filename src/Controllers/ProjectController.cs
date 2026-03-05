@@ -13,12 +13,12 @@ namespace web_backend.Controllers
     [Authorize] // controller requires authenticated user (global fallback policy exists too)
     public class ProjectController : ControllerBase
     {
-        private readonly IDbContextFactory<CosmosContext> _contextFactory;
+        private readonly CosmosContext _context;
         private readonly ICurrentUserService _currentUser;
 
-        public ProjectController(IDbContextFactory<CosmosContext> contextFactory, ICurrentUserService currentUser)
+        public ProjectController(CosmosContext context, ICurrentUserService currentUser)
         {
-            _contextFactory = contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));
+            _context = context ?? throw new ArgumentNullException(nameof(context));
             _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
         }
 
@@ -33,8 +33,7 @@ namespace web_backend.Controllers
             var ownerId = GetUserId();
             if (string.IsNullOrEmpty(ownerId)) return Unauthorized(new { error = "Unauthorized" });
 
-            await using var ctx = _contextFactory.CreateDbContext();
-            var projects = await ctx.Projects
+            var projects = await _context.Projects
                 .Where(p => p.OwnerId == ownerId)
                 .OrderBy(p => p.Name)
                 .ToListAsync();
@@ -49,8 +48,7 @@ namespace web_backend.Controllers
             var ownerId = GetUserId();
             if (string.IsNullOrEmpty(ownerId)) return Unauthorized(new { error = "Unauthorized" });
 
-            await using var ctx = _contextFactory.CreateDbContext();
-            var project = await ctx.Projects
+            var project = await _context.Projects
                 .SingleOrDefaultAsync(p => p.Id == id && p.OwnerId == ownerId);
 
             if (project == null) return NotFound();
@@ -77,11 +75,10 @@ namespace web_backend.Controllers
                 ownerId
             );
 
-            await using var ctx = _contextFactory.CreateDbContext();
-            ctx.Projects.Add(project);
-            await ctx.SaveChangesAsync();
+            _context.Projects.Add(project);
+            await _context.SaveChangesAsync();
 
-            var dto = new Project(project.Id, project.Name, project.Description);
+            var dto = new ProjectDto(project.Id, project.Name, project.Description, project.CreatedAt);
             return CreatedAtAction(nameof(GetProjectById), new { id = project.Id }, dto);
         }
 
@@ -91,22 +88,21 @@ namespace web_backend.Controllers
             var ownerId = GetUserId();
             if (string.IsNullOrEmpty(ownerId)) return Unauthorized(new { error = "Unauthorized" });
 
-            await using var ctx = _contextFactory.CreateDbContext();
-            var project = await ctx.Projects.SingleOrDefaultAsync(p => p.Id == id && p.OwnerId == ownerId);
+            var project = await _context.Projects.SingleOrDefaultAsync(p => p.Id == id && p.OwnerId == ownerId);
             if (project == null) return NotFound();
 
             // Optionally delete tasks that belong to this project and owner to avoid orphans
-            var tasksToRemove = await ctx.Tasks
+            var tasksToRemove = await _context.Tasks
                 .Where(t => t.ProjectId == project.Id && t.OwnerId == ownerId)
                 .ToListAsync();
 
             if (tasksToRemove.Any())
             {
-                ctx.Tasks.RemoveRange(tasksToRemove);
+                _context.Tasks.RemoveRange(tasksToRemove);
             }
 
-            ctx.Projects.Remove(project);
-            await ctx.SaveChangesAsync();
+            _context.Projects.Remove(project);
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
