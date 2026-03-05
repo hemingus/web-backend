@@ -49,13 +49,6 @@ builder.Services.AddDbContext<CosmosContext>(options =>
         databaseName: cosmosDatabase
     );
 });
-builder.Services.AddDbContextFactory<CosmosContext>(options =>
-{
-    options.UseCosmos(
-        connectionString: cosmosConnectionString,
-        databaseName: cosmosDatabase
-    );
-});
 
 // Register current user service and IHttpContextAccessor
 builder.Services.AddHttpContextAccessor();
