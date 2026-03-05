@@ -18,16 +18,16 @@ namespace web_backend.Controllers
     [Authorize]
     public class AuthController : ControllerBase
     {
-        private readonly IDbContextFactory<CosmosContext> _contextFactory;
+        private readonly CosmosContext _context;
         private readonly IConfiguration _configuration;
         private readonly IPasswordHasher<User> _passwordHasher;
 
         public AuthController(
-            IDbContextFactory<CosmosContext> contextFactory,
+            CosmosContext context,
             IConfiguration configuration,
             IPasswordHasher<User> passwordHasher)
         {
-            _contextFactory = contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));
+            _context = context ?? throw new ArgumentNullException(nameof(context));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _passwordHasher = passwordHasher ?? throw new ArgumentNullException(nameof(passwordHasher));
         }
@@ -42,9 +42,7 @@ namespace web_backend.Controllers
                 return BadRequest("Email, name and password are required.");
             }
 
-            await using var ctx = _contextFactory.CreateDbContext();
-
-            var existing = await ctx.Users.SingleOrDefaultAsync(u => u.Email == dto.Email);
+            var existing = await _context.Users.SingleOrDefaultAsync(u => u.Email == dto.Email);
             if (existing != null)
             {
                 return Conflict("A user with that email already exists.");
@@ -54,8 +52,8 @@ namespace web_backend.Controllers
             var passwordHash = _passwordHasher.HashPassword(user, dto.Password);
             user.SetPasswordHash(passwordHash);
 
-            ctx.Users.Add(user);
-            await ctx.SaveChangesAsync();
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
 
             var userDto = new UserDto(user.Id, user.Email, user.Name, user.CreatedAt, user.UpdatedAt);
             return Ok(userDto);
@@ -70,9 +68,7 @@ namespace web_backend.Controllers
                 return BadRequest("Email and password are required.");
             }
 
-            await using var ctx = _contextFactory.CreateDbContext();
-
-            var user = await ctx.Users.SingleOrDefaultAsync(u => u.Email == dto.Email);
+            var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == dto.Email);
             if (user == null)
             {
                 return Unauthorized("Invalid credentials.");
@@ -121,8 +117,8 @@ namespace web_backend.Controllers
 
             // update last login
             user.RegisterLogin();
-            ctx.Users.Update(user);
-            await ctx.SaveChangesAsync();
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
 
             return Ok(result);
         }
