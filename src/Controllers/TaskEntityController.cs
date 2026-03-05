@@ -62,12 +62,12 @@ namespace web_backend.Controllers
 
         [HttpPost]
         public async Task<ActionResult<TaskEntityDto>> CreateTask(
-            TaskEntityForCreationDto task, [FromQuery] string projectId = "")
+            TaskEntityForCreationDto task)
         {
             try
             {
                 // create without ownerId; repository will set OwnerId based on current user
-                var taskEntity = new TaskEntity(task.Description, task.Order, projectId);
+                var taskEntity = new TaskEntity(task.Description, task.Order, task.ProjectId);
                 _repo.AddTask(taskEntity);
                 await _repo.SaveChangesAsync();
                 var taskToReturn = new TaskEntityDto(
