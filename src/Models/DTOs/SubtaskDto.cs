@@ -8,7 +8,7 @@
         public Boolean IsComplete { get; set; }
         public string Timestamp { get; set; }
         public int Order { get; set; }
-        public ICollection<Step> Steps { get; set; }
+        public IEnumerable<Step> Steps { get; set; }
 
         public SubtaskDto(string taskId, string id, string timestamp, string description, Boolean isComplete, ICollection<Step> steps, int order)
         {

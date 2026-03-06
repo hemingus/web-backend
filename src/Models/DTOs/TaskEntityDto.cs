@@ -7,7 +7,7 @@
         public Boolean IsComplete { get; set; }
         public DateTimeOffset Timestamp { get; set; }
         public int Order { get; set; }
-        public ICollection<Subtask> Subtasks { get; set; }  
+        public IEnumerable<Subtask> Subtasks { get; set; }  
 
         public TaskEntityDto(string id, DateTimeOffset timestamp, string description, Boolean isComplete, int order, ICollection<Subtask> subtasks)
         {
