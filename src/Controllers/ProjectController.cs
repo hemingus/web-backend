@@ -31,7 +31,6 @@ namespace web_backend.Controllers
         public async Task<IActionResult> GetProjects()
         {
             var ownerId = GetUserId();
-            if (string.IsNullOrEmpty(ownerId)) return Unauthorized(new { error = "Unauthorized" });
 
             var projects = await _context.Projects
                 .Where(p => p.OwnerId == ownerId)
@@ -46,7 +45,6 @@ namespace web_backend.Controllers
         public async Task<IActionResult> GetProjectById(string id)
         {
             var ownerId = GetUserId();
-            if (string.IsNullOrEmpty(ownerId)) return Unauthorized(new { error = "Unauthorized" });
 
             var project = await _context.Projects
                 .SingleOrDefaultAsync(p => p.Id == id && p.OwnerId == ownerId);
@@ -63,8 +61,7 @@ namespace web_backend.Controllers
             if (request == null) return BadRequest();
 
             var ownerId = GetUserId();
-            if (string.IsNullOrEmpty(ownerId)) return Unauthorized(new { error = "Unauthorized" });
-
+            
             var now = DateTimeOffset.UtcNow;
 
             // Create a Project entity and set OwnerId explicitly
@@ -86,7 +83,6 @@ namespace web_backend.Controllers
         public async Task<IActionResult> DeleteProject(string id)
         {
             var ownerId = GetUserId();
-            if (string.IsNullOrEmpty(ownerId)) return Unauthorized(new { error = "Unauthorized" });
 
             var project = await _context.Projects.SingleOrDefaultAsync(p => p.Id == id && p.OwnerId == ownerId);
             if (project == null) return NotFound();
@@ -105,6 +101,31 @@ namespace web_backend.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+        [HttpGet("{projectId}/tasks", Name = "GetProjectTasks")]
+        public async Task<IActionResult> GetTasksForProject(string projectId)
+        {
+            var ownerId = GetUserId();
+            if (string.IsNullOrEmpty(ownerId))
+                return Unauthorized(new { error = "Unauthorized" });
+
+            if (string.IsNullOrWhiteSpace(projectId))
+                return BadRequest(new { error = "Project id is required." });
+
+            var dtos = await _context.Tasks
+                .AsNoTracking()
+                .Where(t => t.ProjectId == projectId && t.OwnerId == ownerId)
+                .OrderBy(t => t.Order)
+                .Select(t => new TaskEntityDto(
+                    t.Id,
+                    t.Timestamp,
+                    t.Description,
+                    t.IsComplete,
+                    t.Order,
+                    t.Subtasks))
+                .ToListAsync();
+
+            return Ok(dtos);
         }
     }
 }
