@@ -10,7 +10,7 @@
         public int Order { get; set; }
         public IEnumerable<Step> Steps { get; set; }
 
-        public SubtaskDto(string taskId, string id, string timestamp, string description, Boolean isComplete, ICollection<Step> steps, int order)
+        public SubtaskDto(string taskId, string id, string timestamp, string description, Boolean isComplete, IEnumerable<Step> steps, int order)
         {
             TaskId = taskId;
             Id = id;

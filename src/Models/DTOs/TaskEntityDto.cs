@@ -10,7 +10,7 @@
         public int Order { get; set; }
         public IEnumerable<Subtask> Subtasks { get; set; }  
 
-        public TaskEntityDto(string id, string projectId, DateTimeOffset timestamp, string description, Boolean isComplete, int order, ICollection<Subtask> subtasks)
+        public TaskEntityDto(string id, string projectId, DateTimeOffset timestamp, string description, Boolean isComplete, int order, IEnumerable<Subtask> subtasks)
         {
             Id = id;
             ProjectId = projectId;
