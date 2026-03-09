@@ -15,7 +15,18 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-
+// CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendPolicy", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:3000", "https://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
 
 // Choose Cosmos connection based on environment
 string cosmosConnectionString;
@@ -32,7 +43,6 @@ else
     // Production: prefer environment variables, then PROD_* keys
     cosmosConnectionString = builder.Configuration["PROD_COSMOS_CONNECTION_STRING"];
     cosmosDatabase = builder.Configuration["PROD_COSMOS_DATABASE"];
-       
 }
 
 if (string.IsNullOrEmpty(cosmosConnectionString))
@@ -40,8 +50,7 @@ if (string.IsNullOrEmpty(cosmosConnectionString))
     throw new InvalidOperationException("Cosmos DB connection string not configured. Set DEV_COSMOS_CONNECTION_STRING (development) or COSMOS_CONNECTION_STRING/PROD_COSMOS_CONNECTION_STRING (production).");
 }
 
-// Register DbContext (scoped) so repositories that inject CosmosContext work.
-// Also register DbContextFactory for controllers/services that prefer factory usage (AuthController uses factory).
+// Register DbContext
 builder.Services.AddDbContext<CosmosContext>(options =>
 {
     options.UseCosmos(
@@ -54,14 +63,14 @@ builder.Services.AddDbContext<CosmosContext>(options =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
-// Register password hasher for User (used by AuthController)
+// Register password hasher for User
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
 // Register repositories
 builder.Services.AddScoped<ITaskEntityRepository, TaskEntityRepository>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 
-// JWT authentication configuration.
+// JWT authentication configuration
 var jwtKey = builder.Configuration["Jwt:Key"];
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
 var jwtAudience = builder.Configuration["Jwt:Audience"];
@@ -88,7 +97,6 @@ if (!string.IsNullOrEmpty(jwtKey))
             ValidateLifetime = true
         };
 
-        // Return JSON on auth failures
         options.Events = new JwtBearerEvents
         {
             OnChallenge = context =>
@@ -108,7 +116,7 @@ if (!string.IsNullOrEmpty(jwtKey))
     });
 }
 
-// Require authentication for all endpoints by default; mark auth endpoints with [AllowAnonymous]
+// Require authentication for all endpoints by default
 builder.Services.AddAuthorization(options =>
 {
     options.FallbackPolicy = new AuthorizationPolicyBuilder()
@@ -126,12 +134,16 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
 app.UseRouting();
+
+// CORS must be placed before auth and before MapControllers
+app.UseCors("FrontendPolicy");
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-// JSON status code pages for 401/403 (fallback)
+// JSON status code pages for 401/403
 app.UseStatusCodePages(async ctx =>
 {
     var resp = ctx.HttpContext.Response;
