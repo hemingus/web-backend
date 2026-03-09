@@ -118,6 +118,7 @@ namespace web_backend.Controllers
                 .OrderBy(t => t.Order)
                 .Select(t => new TaskEntityDto(
                     t.Id,
+                    t.ProjectId,
                     t.Timestamp,
                     t.Description,
                     t.IsComplete,
