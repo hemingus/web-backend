@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -32,12 +31,14 @@ namespace web_backend.Controllers
             _passwordHasher = passwordHasher ?? throw new ArgumentNullException(nameof(passwordHasher));
         }
 
-        // Allow anonymous because global fallback policy will otherwise require auth
         [HttpPost("register")]
         [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
-            if (dto == null || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password) || string.IsNullOrWhiteSpace(dto.Name))
+            if (dto == null ||
+                string.IsNullOrWhiteSpace(dto.Email) ||
+                string.IsNullOrWhiteSpace(dto.Password) ||
+                string.IsNullOrWhiteSpace(dto.Name))
             {
                 return BadRequest("Email, name and password are required.");
             }
@@ -63,7 +64,9 @@ namespace web_backend.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
-            if (dto == null || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password))
+            if (dto == null ||
+                string.IsNullOrWhiteSpace(dto.Email) ||
+                string.IsNullOrWhiteSpace(dto.Password))
             {
                 return BadRequest("Email and password are required.");
             }
@@ -81,21 +84,10 @@ namespace web_backend.Controllers
             }
 
             var jwtKey = _configuration["Jwt:Key"];
-            if (string.IsNullOrEmpty(jwtKey))
+            if (string.IsNullOrWhiteSpace(jwtKey))
             {
                 return StatusCode(500, "JWT signing key is not configured.");
             }
-
-            var claims = new List<Claim>
-            {
-                new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub, user.Id),
-                new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
-                new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var expiresInMinutes = 60;
             if (int.TryParse(_configuration["Jwt:ExpiryMinutes"], out var parsedMinutes))
@@ -103,24 +95,80 @@ namespace web_backend.Controllers
                 expiresInMinutes = parsedMinutes;
             }
 
+            var expiresAtUtc = DateTime.UtcNow.AddMinutes(expiresInMinutes);
+
+            var claims = new List<Claim>
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
             var tokenDescriptor = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(expiresInMinutes),
+                expires: expiresAtUtc,
                 signingCredentials: creds
             );
 
             var tokenString = new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
 
-            var result = new AuthResultDto(tokenString, tokenDescriptor.ValidTo, new UserDto(user.Id, user.Email, user.Name, user.CreatedAt, user.UpdatedAt));
+            Response.Cookies.Append("auth_token", tokenString, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = new DateTimeOffset(expiresAtUtc),
+                Path = "/"
+            });
 
-            // update last login
             user.RegisterLogin();
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
 
-            return Ok(result);
+            return Ok(new
+            {
+                message = "Login successful",
+                expiresAt = expiresAtUtc,
+                user = new UserDto(user.Id, user.Email, user.Name, user.CreatedAt, user.UpdatedAt)
+            });
+        }
+
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            Response.Cookies.Delete("auth_token", new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Path = "/"
+            });
+
+            return Ok(new { message = "Logged out successfully" });
+        }
+
+        [HttpGet("me")]
+        public async Task<IActionResult> Me()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return Unauthorized();
+            }
+
+            var user = await _context.Users.SingleOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            return Ok(new UserDto(user.Id, user.Email, user.Name, user.CreatedAt, user.UpdatedAt));
         }
     }
 }
