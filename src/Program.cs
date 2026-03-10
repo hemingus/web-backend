@@ -34,20 +34,20 @@ string cosmosDatabase;
 
 if (builder.Environment.IsDevelopment())
 {
-    // Development: prefer explicit DEV_* keys (emulator)
     cosmosConnectionString = builder.Configuration["DEV_COSMOS_CONNECTION_STRING"];
     cosmosDatabase = builder.Configuration["DEV_COSMOS_DATABASE"];
 }
 else
 {
-    // Production: prefer environment variables, then PROD_* keys
     cosmosConnectionString = builder.Configuration["PROD_COSMOS_CONNECTION_STRING"];
     cosmosDatabase = builder.Configuration["PROD_COSMOS_DATABASE"];
 }
 
 if (string.IsNullOrEmpty(cosmosConnectionString))
 {
-    throw new InvalidOperationException("Cosmos DB connection string not configured. Set DEV_COSMOS_CONNECTION_STRING (development) or COSMOS_CONNECTION_STRING/PROD_COSMOS_CONNECTION_STRING (production).");
+    throw new InvalidOperationException(
+        "Cosmos DB connection string not configured. Set DEV_COSMOS_CONNECTION_STRING (development) or PROD_COSMOS_CONNECTION_STRING (production)."
+    );
 }
 
 // Register DbContext
@@ -75,46 +75,62 @@ var jwtKey = builder.Configuration["Jwt:Key"];
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
 var jwtAudience = builder.Configuration["Jwt:Audience"];
 
-if (!string.IsNullOrEmpty(jwtKey))
+if (string.IsNullOrWhiteSpace(jwtKey))
 {
-    builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    })
-    .AddJwtBearer(options =>
-    {
-        options.RequireHttpsMetadata = true;
-        options.SaveToken = true;
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-            ValidateIssuer = !string.IsNullOrEmpty(jwtIssuer),
-            ValidIssuer = jwtIssuer,
-            ValidateAudience = !string.IsNullOrEmpty(jwtAudience),
-            ValidAudience = jwtAudience,
-            ValidateLifetime = true
-        };
-
-        options.Events = new JwtBearerEvents
-        {
-            OnChallenge = context =>
-            {
-                context.HandleResponse();
-                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                context.Response.ContentType = "application/json";
-                return context.Response.WriteAsync("{\"error\":\"Unauthorized\"}");
-            },
-            OnForbidden = context =>
-            {
-                context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                context.Response.ContentType = "application/json";
-                return context.Response.WriteAsync("{\"error\":\"Forbidden\"}");
-            }
-        };
-    });
+    throw new InvalidOperationException("Jwt:Key is not configured.");
 }
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = true;
+    options.SaveToken = true;
+
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+        ValidateIssuer = !string.IsNullOrEmpty(jwtIssuer),
+        ValidIssuer = jwtIssuer,
+        ValidateAudience = !string.IsNullOrEmpty(jwtAudience),
+        ValidAudience = jwtAudience,
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            // Read JWT from HttpOnly cookie instead of requiring Authorization header
+            var token = context.Request.Cookies["auth_token"];
+
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                context.Token = token;
+            }
+
+            return Task.CompletedTask;
+        },
+        OnChallenge = context =>
+        {
+            context.HandleResponse();
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            context.Response.ContentType = "application/json";
+            return context.Response.WriteAsync("{\"error\":\"Unauthorized\"}");
+        },
+        OnForbidden = context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            context.Response.ContentType = "application/json";
+            return context.Response.WriteAsync("{\"error\":\"Forbidden\"}");
+        }
+    };
+});
 
 // Require authentication for all endpoints by default
 builder.Services.AddAuthorization(options =>
@@ -137,16 +153,15 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 
-// CORS must be placed before auth and before MapControllers
 app.UseCors("FrontendPolicy");
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-// JSON status code pages for 401/403
 app.UseStatusCodePages(async ctx =>
 {
     var resp = ctx.HttpContext.Response;
+
     if (resp.StatusCode == StatusCodes.Status401Unauthorized)
     {
         resp.ContentType = "application/json";
