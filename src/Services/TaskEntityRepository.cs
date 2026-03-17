@@ -48,13 +48,13 @@ namespace web_backend.Services
             }
         }
 
-        public void ReorderTasks()
+        public void ReorderTasks(string projectId)
         {
             var ownerId = _currentUser.UserId;
             if (string.IsNullOrEmpty(ownerId)) return;
 
             var orderedTasks = _context.Tasks
-                .Where(t => t.OwnerId == ownerId)
+                .Where(t => t.OwnerId == ownerId && t.ProjectId == projectId)
                 .OrderBy(t => t.Order)
                 .ToList();
             for (int i = 0; i < orderedTasks.Count; i++)

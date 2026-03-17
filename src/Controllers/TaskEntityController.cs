@@ -93,7 +93,7 @@ namespace web_backend.Controllers
                 if (task == null) return NotFound();
                 _repo.RemoveTask(task);
                 await _repo.SaveChangesAsync();
-                _repo.ReorderTasks();
+                _repo.ReorderTasks(task.ProjectId);
                 await _repo.SaveChangesAsync();
                 return NoContent();
             }
@@ -187,7 +187,7 @@ namespace web_backend.Controllers
                 await _repo.SaveChangesAsync();
                 _repo.UpdateTask(existingTask);
                 await _repo.SaveChangesAsync();
-                _repo.ReorderTasks();
+                _repo.ReorderTasks(existingTask.ProjectId);
 
                 await _repo.SaveChangesAsync();
 

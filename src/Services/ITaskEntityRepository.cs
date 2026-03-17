@@ -10,7 +10,7 @@ namespace web_backend.Services
         Task<TaskEntity> GetTaskByIdAsync(string taskId);
         void UpdateTaskOrderPush(int newOrder);
         void UpdateTaskOrderPull(int newOrder);
-        void ReorderTasks();
+        void ReorderTasks(string projectId);
         void AddTask(TaskEntity task);
         void RemoveTask(TaskEntity task);
         void UpdateTask(TaskEntity task);
