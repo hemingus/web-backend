@@ -34,7 +34,7 @@ namespace web_backend.Controllers
 
             var projects = await _context.Projects
                 .Where(p => p.OwnerId == ownerId)
-                .OrderBy(p => p.Name)
+                .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
             var dtos = projects.Select(p => new ProjectDto(p.Id, p.Name, p.Description, p.CreatedAt));
