@@ -30,16 +30,16 @@ namespace web_backend.Services
                 .ToListAsync();
         }
 
-        public async Task<TaskEntity> GetTaskByIdAsync(string taskId)
+        public async Task<TaskEntity?> GetTaskByIdAsync(string taskId)
         {
             try
             {
                 var ownerId = _currentUser.UserId;
                 if (string.IsNullOrEmpty(ownerId)) return null;
 
-                TaskEntity task = await _context.Tasks
+                return await _context.Tasks
                     .SingleOrDefaultAsync(t => t.Id == taskId && t.OwnerId == ownerId);
-                return task;
+                
             }
             catch (Exception ex)
             {
@@ -157,14 +157,17 @@ namespace web_backend.Services
             return task.Subtasks.OrderBy(s => s.Order);
         }
 
-        public Subtask GetSubtaskById(TaskEntity task, string subtaskId)
+        public Subtask? GetSubtaskById(TaskEntity task, string subtaskId)
         {
-            Subtask subtask = task.Subtasks.FirstOrDefault(t => t.Id == subtaskId);
-            if (subtask == null)
+            try
             {
+                return task.Subtasks.FirstOrDefault(t => t.Id == subtaskId);
+            }            
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
                 return null;
-            }
-            return subtask;
+            }  
         }
 
         public void AddSubtask(TaskEntity task, Subtask subtask)
@@ -174,7 +177,7 @@ namespace web_backend.Services
 
         public void RemoveSubtask(TaskEntity task, string subtaskId)
         {
-            Subtask subtask = task.Subtasks.FirstOrDefault(t => t.Id == subtaskId);
+            Subtask? subtask = task.Subtasks.FirstOrDefault(t => t.Id == subtaskId);
             if (subtask != null) task.Subtasks.Remove(subtask);
         }
 
@@ -190,14 +193,17 @@ namespace web_backend.Services
             return subtask.Steps;
         }
 
-        public Step GetStepById(Subtask subtask,  string stepId)
+        public Step? GetStepById(Subtask subtask,  string stepId)
         {
-            Step step = subtask.Steps.FirstOrDefault(t => t.Id == stepId);
-            if (step == null)
+            try
             {
+                return subtask.Steps.FirstOrDefault(t => t.Id == stepId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
                 return null;
             }
-            return step;
         }
 
         public void UpdateStepOrderPush(Subtask subtask, int newOrder)
@@ -242,8 +248,9 @@ namespace web_backend.Services
 
         public void RemoveStep(Subtask subtask, string stepId)
         {
-            Step step = GetStepById(subtask, stepId);
-            subtask.Steps.Remove(step);
+            Step? step = subtask.Steps.FirstOrDefault(t => t.Id == stepId);
+            if (step != null)
+                subtask.Steps.Remove(step);
         }
 
         public void UpdateStep(Step step)
