@@ -18,12 +18,12 @@ namespace web_backend.Services
         {
             return await _context.Comments.ToListAsync();
         }
-        public async Task<Comment> GetCommentByIdAsync(string commentId)
+        public async Task<Comment?> GetCommentByIdAsync(string commentId)
         {
             try
             {
-                Comment comment = await _context.Comments.SingleOrDefaultAsync(c => c.Id == commentId);
-                return comment;
+                return await _context.Comments
+                    .SingleOrDefaultAsync(c => c.Id == commentId);
             }
             catch (Exception ex)
             {

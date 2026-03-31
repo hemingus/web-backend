@@ -7,7 +7,7 @@ namespace web_backend.Services
     {
         // Comment
         Task<IEnumerable<Comment>> GetCommentsAsync();
-        Task<Comment> GetCommentByIdAsync(string commentId);
+        Task<Comment?> GetCommentByIdAsync(string commentId);
         void AddComment(Comment comment);
         void RemoveComment(Comment comment);
 
