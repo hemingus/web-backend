@@ -29,8 +29,8 @@ builder.Services.AddCors(options =>
 });
 
 // Choose Cosmos connection based on environment
-string cosmosConnectionString;
-string cosmosDatabase;
+string? cosmosConnectionString;
+string? cosmosDatabase;
 
 if (builder.Environment.IsDevelopment())
 {
@@ -47,6 +47,13 @@ if (string.IsNullOrEmpty(cosmosConnectionString))
 {
     throw new InvalidOperationException(
         "Cosmos DB connection string not configured. Set DEV_COSMOS_CONNECTION_STRING (development) or PROD_COSMOS_CONNECTION_STRING (production)."
+    );
+}
+
+if (string.IsNullOrEmpty(cosmosDatabase))
+{
+    throw new InvalidOperationException(
+        "Cosmos DB not configured. Set DEV_COSMOS_DATABASE (development) or PROD_COSMOS_DATABASE (production)."
     );
 }
 
