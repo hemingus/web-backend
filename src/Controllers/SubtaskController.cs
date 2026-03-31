@@ -33,6 +33,10 @@ namespace web_backend.Controllers
                     return NotFound();
                 }
                 var subtask = _repo.GetSubtaskById(task, subtaskId);
+                if (subtask == null)
+                {
+                    return NotFound();
+                }
                 var subtaskToReturn = new SubtaskDto(
                     subtask.TaskId, subtask.Id, subtask.Timestamp, subtask.Description, 
                     subtask.IsComplete, subtask.Steps, subtask.Order);
@@ -91,28 +95,23 @@ namespace web_backend.Controllers
         }
 
         [HttpDelete("{subtaskId}")]
-        public async Task<IActionResult> DeleteSubtask(string taskId,
-            string subtaskId)
+        public async Task<IActionResult> DeleteSubtask(string taskId, string subtaskId)
         {
-            try
-            {
-                var task = await _repo.GetTaskByIdAsync(taskId);
-                if (task == null)
-                {
-                    return NotFound();
-                }
-                _repo.RemoveSubtask(task, subtaskId);
-                await _repo.SaveChangesAsync();
-                _repo.ReorderSubtasks(task);
-                await _repo.SaveChangesAsync();
-                return NoContent();
-            }
+            var task = await _repo.GetTaskByIdAsync(taskId);
+            if (task == null)
+                return NotFound();
 
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-                return StatusCode(500, "Internal server error");
-            }
+            var existingSubtask = _repo.GetSubtaskById(task, subtaskId);
+            if (existingSubtask == null)
+                return NotFound();
+
+            _repo.RemoveSubtask(task, subtaskId);
+            await _repo.SaveChangesAsync();
+
+            _repo.ReorderSubtasks(task);
+            await _repo.SaveChangesAsync();
+
+            return NoContent();
         }
 
         [HttpPatch("{subtaskId}")]

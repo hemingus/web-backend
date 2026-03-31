@@ -24,26 +24,31 @@ namespace web_backend.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetStepById(string taskId, string subtaskId, string id)
         {
-            try
+            var task = await _repo.GetTaskByIdAsync(taskId);
+            if (task == null)
             {
-                var task = await _repo.GetTaskByIdAsync(taskId);
-                if (task == null)
-                {
-                    return NotFound(); // TaskEntity with the provided ID not found
-                }
-                var subtask = _repo.GetSubtaskById(task, subtaskId);
-                if (subtask == null)
-                {
-                    return NotFound(); // Subtask with the provided ID not found
-                }
-                var step = _repo.GetStepById(subtask, id);
-                return Ok(step);
+                return NotFound(); // TaskEntity with the provided ID not found
             }
-            catch (Exception ex)
+            var subtask = _repo.GetSubtaskById(task, subtaskId);
+            if (subtask == null)
             {
-                Console.WriteLine(ex);
-                return StatusCode(500, "Internal server error");
+                return NotFound(); // Subtask with the provided ID not found
             }
+            var step = _repo.GetStepById(subtask, id);
+            if (step == null)
+            {
+                return NotFound(); // Step with the provided ID not found
+            }
+            var stepToReturn = new StepDto(
+                step.TaskId, 
+                step.SubtaskId, 
+                step.Id, 
+                step.Timestamp, 
+                step.Description, 
+                step.IsComplete, 
+                step.Order);
+
+            return Ok(stepToReturn);
         }
 
         [HttpGet(Name = "GetSteps")]
@@ -114,6 +119,11 @@ namespace web_backend.Controllers
                 if (subtask == null)
                 {
                     return NotFound(); // Subtask with the provided ID not found
+                }
+                var step = _repo.GetStepById(subtask, id);
+                if (step == null)
+                {
+                    return NotFound(); // Step with the provided ID not found
                 }
                 _repo.RemoveStep(subtask, id);
                 _repo.ReorderSteps(subtask);
