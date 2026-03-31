@@ -3,17 +3,20 @@ namespace web_backend.Entities
 {
     public class User
     {
+        [Required]
         public string Id { get; private set; } = Guid.NewGuid().ToString();
-
-        public string? Email { get; private set; }
-        public string Name { get; private set; }
-        public string PasswordHash { get; private set; }
+        [Required]
+        public string Email { get; private set; } = null!;
+        [Required]
+        public string Name { get; private set; } = null!;
+        [Required]
+        public string PasswordHash { get; private set; } = null!;
 
         public DateTimeOffset CreatedAt { get; private set; }
         public DateTimeOffset UpdatedAt { get; private set; }
         public DateTimeOffset? LastLoginAt { get; private set; }
 
-        public User(string? email, string name, string passwordHash)
+        public User(string email, string name, string passwordHash)
         {
             Email = email;
             Name = name;
